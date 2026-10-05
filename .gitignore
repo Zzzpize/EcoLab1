@@ -1,0 +1,16 @@
+*.o
+*.a
+*.so
+*.map
+Eco.Lab1/BuildFiles/**
+!Eco.Lab1/BuildFiles/.gitkeep
+
+.vscode/
+.idea/
+.claude/
+CLAUDE.md
+*.code-workspace.local
+
+.DS_Store
+Thumbs.db
+desktop.ini
