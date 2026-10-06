@@ -11,8 +11,8 @@
 		01138AD827F1BE1A00734060 /* CEcoLab1Factory.h in Headers */ = {isa = PBXBuildFile; fileRef = 01138AD527F1BE1A00734060 /* CEcoLab1Factory.h */; };
 		01138AD927F1BE1A00734060 /* CEcoLab1.h in Headers */ = {isa = PBXBuildFile; fileRef = 01138AD627F1BE1A00734060 /* CEcoLab1.h */; };
 		01138ADA27F1BE1A00734060 /* CEcoLab1.h in Headers */ = {isa = PBXBuildFile; fileRef = 01138AD627F1BE1A00734060 /* CEcoLab1.h */; };
-		01138ADF27F1BE2C00734060 /* IEcoLab1.h in Headers */ = {isa = PBXBuildFile; fileRef = 01138ADD27F1BE2C00734060 /* IEcoLab1.h */; };
-		01138AE027F1BE2C00734060 /* IEcoLab1.h in Headers */ = {isa = PBXBuildFile; fileRef = 01138ADD27F1BE2C00734060 /* IEcoLab1.h */; };
+		01138ADF27F1BE2C00734060 /* IEcoAdvancedMath.h in Headers */ = {isa = PBXBuildFile; fileRef = 01138ADD27F1BE2C00734060 /* IEcoAdvancedMath.h */; };
+		01138AE027F1BE2C00734060 /* IEcoAdvancedMath.h in Headers */ = {isa = PBXBuildFile; fileRef = 01138ADD27F1BE2C00734060 /* IEcoAdvancedMath.h */; };
 		01138AE127F1BE2C00734060 /* IdEcoLab1.h in Headers */ = {isa = PBXBuildFile; fileRef = 01138ADE27F1BE2C00734060 /* IdEcoLab1.h */; };
 		01138AE227F1BE2C00734060 /* IdEcoLab1.h in Headers */ = {isa = PBXBuildFile; fileRef = 01138ADE27F1BE2C00734060 /* IdEcoLab1.h */; };
 		01138AE727F1BE4900734060 /* CEcoLab1.c in Sources */ = {isa = PBXBuildFile; fileRef = 01138AE527F1BE4900734060 /* CEcoLab1.c */; };
@@ -26,7 +26,7 @@
 		01138ACC27F1BDD300734060 /* lib039232DCC9354369925013DC847FF6CC.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = lib039232DCC9354369925013DC847FF6CC.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		01138AD527F1BE1A00734060 /* CEcoLab1Factory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CEcoLab1Factory.h; path = ../../../HeaderFiles/CEcoLab1Factory.h; sourceTree = "<group>"; };
 		01138AD627F1BE1A00734060 /* CEcoLab1.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CEcoLab1.h; path = ../../../HeaderFiles/CEcoLab1.h; sourceTree = "<group>"; };
-		01138ADD27F1BE2C00734060 /* IEcoLab1.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IEcoLab1.h; path = ../../../SharedFiles/IEcoLab1.h; sourceTree = "<group>"; };
+		01138ADD27F1BE2C00734060 /* IEcoAdvancedMath.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IEcoAdvancedMath.h; path = ../../../SharedFiles/IEcoAdvancedMath.h; sourceTree = "<group>"; };
 		01138ADE27F1BE2C00734060 /* IdEcoLab1.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IdEcoLab1.h; path = ../../../SharedFiles/IdEcoLab1.h; sourceTree = "<group>"; };
 		01138AE527F1BE4900734060 /* CEcoLab1.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = CEcoLab1.c; path = ../../../SourceFiles/CEcoLab1.c; sourceTree = "<group>"; };
 		01138AE627F1BE4900734060 /* CEcoLab1Factory.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = CEcoLab1Factory.c; path = ../../../SourceFiles/CEcoLab1Factory.c; sourceTree = "<group>"; };
@@ -82,7 +82,7 @@
 			isa = PBXGroup;
 			children = (
 				01138ADE27F1BE2C00734060 /* IdEcoLab1.h */,
-				01138ADD27F1BE2C00734060 /* IEcoLab1.h */,
+				01138ADD27F1BE2C00734060 /* IEcoAdvancedMath.h */,
 			);
 			name = "Shared Files";
 			sourceTree = "<group>";
@@ -105,7 +105,7 @@
 			files = (
 				01138AE127F1BE2C00734060 /* IdEcoLab1.h in Headers */,
 				01138AD727F1BE1A00734060 /* CEcoLab1Factory.h in Headers */,
-				01138ADF27F1BE2C00734060 /* IEcoLab1.h in Headers */,
+				01138ADF27F1BE2C00734060 /* IEcoAdvancedMath.h in Headers */,
 				01138AD927F1BE1A00734060 /* CEcoLab1.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -116,7 +116,7 @@
 			files = (
 				01138AE227F1BE2C00734060 /* IdEcoLab1.h in Headers */,
 				01138AD827F1BE1A00734060 /* CEcoLab1Factory.h in Headers */,
-				01138AE027F1BE2C00734060 /* IEcoLab1.h in Headers */,
+				01138AE027F1BE2C00734060 /* IEcoAdvancedMath.h in Headers */,
 				01138ADA27F1BE1A00734060 /* CEcoLab1.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

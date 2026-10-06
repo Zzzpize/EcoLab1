@@ -29,11 +29,11 @@
  * </summary>
  *
  * <description>
- *   QueryInterface function for the IEcoLab1 interface
+ *   QueryInterface function for the IEcoAdvancedMath interface
  * </description>
  *
  */
-static int16_t ECOCALLMETHOD CEcoLab1_847FF6CC_QueryInterface(/* in */ IEcoLab1Ptr_t me, /* in */ const UGUID* riid, /* out */ void** ppv) {
+static int16_t ECOCALLMETHOD CEcoLab1_847FF6CC_QueryInterface(/* in */ IEcoAdvancedMathPtr_t me, /* in */ const UGUID* riid, /* out */ void** ppv) {
     CEcoLab1_847FF6CC* pCMe = (CEcoLab1_847FF6CC*)me;
 
     /* Pointer Validation */
@@ -42,14 +42,14 @@ static int16_t ECOCALLMETHOD CEcoLab1_847FF6CC_QueryInterface(/* in */ IEcoLab1P
     }
 
     /* Validate and retrieve requested interface */
-    if ( IsEqualUGUID(riid, &IID_IEcoLab1) ) {
-        *ppv = &pCMe->m_pVTblIEcoLab1;
-        pCMe->m_pVTblIEcoLab1->AddRef((IEcoLab1*)pCMe);
+    if ( IsEqualUGUID(riid, &IID_IEcoAdvancedMath) ) {
+        *ppv = &pCMe->m_pVTblIEcoAdvancedMath;
+        pCMe->m_pVTblIEcoAdvancedMath->AddRef((IEcoAdvancedMath*)pCMe);
     }
 	
     else if ( IsEqualUGUID(riid, &IID_IEcoUnknown) ) {
-        *ppv = &pCMe->m_pVTblIEcoLab1;
-        pCMe->m_pVTblIEcoLab1->AddRef((IEcoLab1*)pCMe);
+        *ppv = &pCMe->m_pVTblIEcoAdvancedMath;
+        pCMe->m_pVTblIEcoAdvancedMath->AddRef((IEcoAdvancedMath*)pCMe);
     }
     else {
         *ppv = 0;
@@ -65,11 +65,11 @@ static int16_t ECOCALLMETHOD CEcoLab1_847FF6CC_QueryInterface(/* in */ IEcoLab1P
  * </summary>
  *
  * <description>
- *   AddRef function for the IEcoLab1 interface
+ *   AddRef function for the IEcoAdvancedMath interface
  * </description>
  *
  */
-static uint32_t ECOCALLMETHOD CEcoLab1_847FF6CC_AddRef(/* in */ IEcoLab1Ptr_t me) {
+static uint32_t ECOCALLMETHOD CEcoLab1_847FF6CC_AddRef(/* in */ IEcoAdvancedMathPtr_t me) {
     CEcoLab1_847FF6CC* pCMe = (CEcoLab1_847FF6CC*)me;
 
     /* Pointer Validation */
@@ -87,11 +87,11 @@ static uint32_t ECOCALLMETHOD CEcoLab1_847FF6CC_AddRef(/* in */ IEcoLab1Ptr_t me
  * </summary>
  *
  * <description>
- *   Release function for the IEcoLab1 interface
+ *   Release function for the IEcoAdvancedMath interface
  * </description>
  *
  */
-static uint32_t ECOCALLMETHOD CEcoLab1_847FF6CC_Release(/* in */ IEcoLab1Ptr_t me) {
+static uint32_t ECOCALLMETHOD CEcoLab1_847FF6CC_Release(/* in */ IEcoAdvancedMathPtr_t me) {
     CEcoLab1_847FF6CC* pCMe = (CEcoLab1_847FF6CC*)me;
 
     /* Pointer Validation */
@@ -110,43 +110,29 @@ static uint32_t ECOCALLMETHOD CEcoLab1_847FF6CC_Release(/* in */ IEcoLab1Ptr_t m
     return pCMe->m_cRef;
 }
 
-/*
- *
- * <summary>
- *   MyFunction Function
- * </summary>
- *
- * <description>
- *   Function
- * </description>
- *
- */
-static int16_t ECOCALLMETHOD CEcoLab1_847FF6CC_MyFunction(/* in */ IEcoLab1Ptr_t me, /* in */ char_t* Name, /* out */ char_t** copyName) {
-    CEcoLab1_847FF6CC* pCMe = (CEcoLab1_847FF6CC*)me;
-    int16_t index = 0;
-
-    /* Pointer Validation */
-    if (me == 0 || Name == 0 || copyName == 0) {
-        return ERR_ECO_POINTER;
-    }
-
-    /* Copying the string */
-    while(Name[index] != 0) {
-        index++;
-    }
-    pCMe->m_Name = (char_t*)pCMe->m_pIMem->pVTbl->Alloc(pCMe->m_pIMem, index + 1);
-    index = 0;
-    while(Name[index] != 0) {
-        pCMe->m_Name[index] = Name[index];
-        index++;
-    }
-    *copyName = pCMe->m_Name;
-
-    return ERR_ECO_SUCCESS;
+static int16_t ECOCALLMETHOD CEcoLab1_847FF6CC_Step(/* in */ IEcoAdvancedMathPtr_t me, /* in */ EcoOdeFunc f, /* in */ voidptr_t ctx, /* in */ uint32_t n, /* in */ double_t t, /* in */ double_t h, /* in */ const double_t* y, /* out */ double_t* yOut) {
+    return ERR_ECO_NOTIMPL;
 }
 
+static int16_t ECOCALLMETHOD CEcoLab1_847FF6CC_Stepf(/* in */ IEcoAdvancedMathPtr_t me, /* in */ EcoOdeFuncF f, /* in */ voidptr_t ctx, /* in */ uint32_t n, /* in */ float_t t, /* in */ float_t h, /* in */ const float_t* y, /* out */ float_t* yOut) {
+    return ERR_ECO_NOTIMPL;
+}
 
+static int16_t ECOCALLMETHOD CEcoLab1_847FF6CC_Stepl(/* in */ IEcoAdvancedMathPtr_t me, /* in */ EcoOdeFuncL f, /* in */ voidptr_t ctx, /* in */ uint32_t n, /* in */ ldouble_t t, /* in */ ldouble_t h, /* in */ const ldouble_t* y, /* out */ ldouble_t* yOut) {
+    return ERR_ECO_NOTIMPL;
+}
 
+static int16_t ECOCALLMETHOD CEcoLab1_847FF6CC_Solve(/* in */ IEcoAdvancedMathPtr_t me, /* in */ EcoOdeFunc f, /* in */ voidptr_t ctx, /* in */ uint32_t n, /* in */ double_t t0, /* in */ double_t t1, /* in */ const double_t* y0, /* in */ const EcoOdeOptions* opt, /* in */ uint32_t capacity, /* out */ double_t* tOut, /* out */ double_t* yOut, /* out */ EcoOdeStats* stats) {
+    return ERR_ECO_NOTIMPL;
+}
+
+static int16_t ECOCALLMETHOD CEcoLab1_847FF6CC_Solvef(/* in */ IEcoAdvancedMathPtr_t me, /* in */ EcoOdeFuncF f, /* in */ voidptr_t ctx, /* in */ uint32_t n, /* in */ float_t t0, /* in */ float_t t1, /* in */ const float_t* y0, /* in */ const EcoOdeOptions* opt, /* in */ uint32_t capacity, /* out */ float_t* tOut, /* out */ float_t* yOut, /* out */ EcoOdeStats* stats) {
+    return ERR_ECO_NOTIMPL;
+}
+
+static int16_t ECOCALLMETHOD CEcoLab1_847FF6CC_Solvel(/* in */ IEcoAdvancedMathPtr_t me, /* in */ EcoOdeFuncL f, /* in */ voidptr_t ctx, /* in */ uint32_t n, /* in */ ldouble_t t0, /* in */ ldouble_t t1, /* in */ const ldouble_t* y0, /* in */ const EcoOdeOptions* opt, /* in */ uint32_t capacity, /* out */ ldouble_t* tOut, /* out */ ldouble_t* yOut, /* out */ EcoOdeStats* stats) {
+    return ERR_ECO_NOTIMPL;
+}
 
 /*
  *
@@ -241,9 +227,6 @@ static void ECOCALLMETHOD deleteCEcoLab1_847FF6CC(/* in */ CEcoLab1_847FF6CCPtr_
     if (pCMe != 0 ) {
         pIMem = pCMe->m_pIMem;
         /* Freeing */
-        if ( pCMe->m_Name != 0 ) {
-            pIMem->pVTbl->Free(pIMem, pCMe->m_Name);
-        }
         if ( pCMe->m_pISys != 0 ) {
             pCMe->m_pISys->pVTbl->Release(pCMe->m_pISys);
         }
@@ -252,25 +235,29 @@ static void ECOCALLMETHOD deleteCEcoLab1_847FF6CC(/* in */ CEcoLab1_847FF6CCPtr_
     }
 }
 
-/* IEcoLab1 Virtual Table */
-IEcoLab1VTbl g_x6587465E556F41F69394B21EB08FDBF8VTbl_847FF6CC = {
+/* IEcoAdvancedMath Virtual Table */
+IEcoAdvancedMathVTbl g_x4EF92ACD86564B68821E2E480C0651D9VTbl_847FF6CC = {
     CEcoLab1_847FF6CC_QueryInterface,
     CEcoLab1_847FF6CC_AddRef,
     CEcoLab1_847FF6CC_Release,
-    CEcoLab1_847FF6CC_MyFunction
+    CEcoLab1_847FF6CC_Step,
+    CEcoLab1_847FF6CC_Stepf,
+    CEcoLab1_847FF6CC_Stepl,
+    CEcoLab1_847FF6CC_Solve,
+    CEcoLab1_847FF6CC_Solvef,
+    CEcoLab1_847FF6CC_Solvel
 };
 
 
 
 /* Object Instance */
 CEcoLab1_847FF6CC g_xCEcoLab1_847FF6CC = {
-    &g_x6587465E556F41F69394B21EB08FDBF8VTbl_847FF6CC,
+    &g_x4EF92ACD86564B68821E2E480C0651D9VTbl_847FF6CC,
    
     initCEcoLab1_847FF6CC,
     createCEcoLab1_847FF6CC,
     deleteCEcoLab1_847FF6CC,
     1, /* m_cRef */
-    0, /* m_pISys */
-    0, /* m_pISys */
-    0  /* m_Name */
+    0, /* m_pIMem */
+    0  /* m_pISys */
 };
