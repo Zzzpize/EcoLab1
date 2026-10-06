@@ -25,7 +25,7 @@
 #define __ID_ECOLAB1_H__
 
 #include "IEcoBase1.h"
-#include "IEcoLab1.h"
+#include "IEcoAdvancedMath.h"
 
 /* EcoLab1 CID = {039232DC-C935-4369-9250-13DC847FF6CC} */
 #ifndef __CID_EcoLab1
