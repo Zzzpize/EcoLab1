@@ -152,7 +152,7 @@ static void TestOscillator(IEcoAdvancedMath* m) {
             printf("  %6.2f %20.15f %20.15f %12.3e\n", g_t[i], g_y[2 * i], cos(g_t[i]), fabs(g_y[2 * i] - cos(g_t[i])));
         }
     }
-    printf("макс. ошибка по x и x': %.3e, отклонение энергии: %.3e\n", maxErr, maxEnergy);
+    printf("  макс. ошибка по x и x': %.3e, отклонение энергии: %.3e\n", maxErr, maxEnergy);
     Check("1001 точка, последняя ровно в t = 10", r == 0 && st.Points == BUF_POINTS && g_t[BUF_POINTS - 1] == 10.0);
     Check("x(t) и x'(t) совпадают с cos(t) и -sin(t) до 1e-9", r == 0 && maxErr < 1e-9);
     Check("энергия x^2 + x'^2 сохраняется до 1e-9", r == 0 && maxEnergy < 1e-9);

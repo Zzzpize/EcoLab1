@@ -4,6 +4,8 @@
 *.map
 Eco.Lab1/BuildFiles/**
 !Eco.Lab1/BuildFiles/.gitkeep
+Eco.Lab1DP/BuildFiles/**
+!Eco.Lab1DP/BuildFiles/.gitkeep
 
 .vscode/
 .idea/
