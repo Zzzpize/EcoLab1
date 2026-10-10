@@ -537,6 +537,75 @@ static void TestCompare(IEcoAdvancedMath* rk4, IEcoAdvancedMath* dp) {
     Check("при точности ~1e-9 Дорман-Принс требует меньше вызовов правой части", ok && errRk < 1e-9 && errDp < 1e-9 && callsDp < callsRk);
 }
 
+static int16_t ECOCALLMETHOD VanDerPol(voidptr_t ctx, double_t t, const double_t* y, double_t* dydt, uint32_t n) {
+    dydt[0] = y[1];
+    dydt[1] = (1.0 - y[0] * y[0]) * y[1] - y[0];
+    return 0;
+}
+
+static int16_t ECOCALLMETHOD LotkaVolterra(voidptr_t ctx, double_t t, const double_t* y, double_t* dydt, uint32_t n) {
+    dydt[0] = 1.5 * y[0] - y[0] * y[1];
+    dydt[1] = y[0] * y[1] - 3.0 * y[1];
+    return 0;
+}
+
+static double_t SolveAndCompare(IEcoAdvancedMath* m, const char* name, EcoOdeFunc f, double_t t1, const double_t* y0, const EcoOdeOptions* opt, const double_t* ref) {
+    EcoOdeStats st;
+    double_t err = 0;
+    double_t* y = 0;
+    int16_t r = 0;
+
+    r = m->pVTbl->Solve(m, f, 0, 2, 0.0, t1, y0, opt, BUF_POINTS, g_t, g_y, &st);
+    if (r != 0) {
+        printf("  %14s ошибка %d\n", name, r);
+        return 1.0;
+    }
+    y = g_y + 2 * (st.Points - 1);
+    err = fabs(y[0] - ref[0]);
+    if (fabs(y[1] - ref[1]) > err) {
+        err = fabs(y[1] - ref[1]);
+    }
+    printf("  %14s %8u %10u %20.15f %20.15f %12.3e\n", name, (unsigned)st.Steps, (unsigned)st.Evaluations, y[0], y[1], err);
+    return err;
+}
+
+static void TestNonlinear(IEcoAdvancedMath* rk4, IEcoAdvancedMath* dp) {
+    EcoOdeOptions opt;
+    double_t y0[2];
+    double_t ref[2];
+    double_t errRk = 0;
+    double_t errDp = 0;
+
+    opt.Step = 0;
+    opt.RelTol = 1e-8;
+    opt.AbsTol = 1e-11;
+    opt.MaxSteps = 0;
+
+    printf("\n14. Уравнение Ван дер Поля x'' = (1 - x^2)x' - x, x(0) = 2, x'(0) = 0 на [0, 20]\n");
+    printf("  %14s %8s %10s %20s %20s %12s\n", "method", "steps", "f calls", "x(20)", "x'(20)", "max |err|");
+    y0[0] = 2.0;
+    y0[1] = 0.0;
+    ref[0] = 2.008149762174939;
+    ref[1] = -0.042508875273136;
+    errRk = SolveAndCompare(rk4, "RK4", VanDerPol, 20.0, y0, 0, ref);
+    errDp = SolveAndCompare(dp, "Dormand-Prince", VanDerPol, 20.0, y0, &opt, ref);
+    printf("  %14s %8s %10s %20.15f %20.15f\n", "scipy DOP853", "", "", ref[0], ref[1]);
+    Check("RK4, 1000 шагов: совпадение с эталоном до 1e-5", errRk < 1e-5);
+    Check("Дорман-Принс, RelTol 1e-8: совпадение с эталоном до 1e-6", errDp < 1e-6);
+
+    printf("\n15. Лотка-Вольтерра x' = 1.5x - xy, y' = xy - 3y, x(0) = 10, y(0) = 5 на [0, 15]\n");
+    printf("  %14s %8s %10s %20s %20s %12s\n", "method", "steps", "f calls", "x(15)", "y(15)", "max |err|");
+    y0[0] = 10.0;
+    y0[1] = 5.0;
+    ref[0] = 0.713751378097771;
+    ref[1] = 0.075407796240796;
+    errRk = SolveAndCompare(rk4, "RK4", LotkaVolterra, 15.0, y0, 0, ref);
+    errDp = SolveAndCompare(dp, "Dormand-Prince", LotkaVolterra, 15.0, y0, &opt, ref);
+    printf("  %14s %8s %10s %20.15f %20.15f\n", "scipy DOP853", "", "", ref[0], ref[1]);
+    Check("RK4, 1000 шагов: совпадение с эталоном до 1e-5", errRk < 1e-5);
+    Check("Дорман-Принс, RelTol 1e-8: совпадение с эталоном до 1e-6", errDp < 1e-6);
+}
+
 /*
  *
  * <summary>
@@ -632,6 +701,7 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
     TestDpStepAndStats(pIMathDP);
     TestDpErrors(pIMathDP);
     TestCompare(pIMath, pIMathDP);
+    TestNonlinear(pIMath, pIMathDP);
     printf("\nИтого: пройдено %d, провалено %d\n", g_passed, g_failed);
     result = g_failed == 0 ? 0 : -1;
 
