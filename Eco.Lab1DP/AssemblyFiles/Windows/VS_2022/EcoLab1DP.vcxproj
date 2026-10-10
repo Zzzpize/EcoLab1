@@ -349,7 +349,7 @@
     <ClInclude Include="..\..\..\HeaderFiles\CEcoLab1DPFactory.h" />
     <ClInclude Include="..\..\..\SharedFiles\ErrEcoLab1DP.h" />
     <ClInclude Include="..\..\..\SharedFiles\IdEcoLab1DP.h" />
-    <ClInclude Include="..\..\..\SharedFiles\IEcoLab1DP.h" />
+    <ClInclude Include="..\..\..\SharedFiles\IEcoAdvancedMath.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\SourceFiles\CEcoLab1DP.c" />

@@ -26,7 +26,7 @@
     <ClInclude Include="..\..\..\SharedFiles\ErrEcoLab1DP.h">
       <Filter>Shared Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\SharedFiles\IEcoLab1DP.h">
+    <ClInclude Include="..\..\..\SharedFiles\IEcoAdvancedMath.h">
       <Filter>Shared Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\SharedFiles\IdEcoLab1DP.h">
