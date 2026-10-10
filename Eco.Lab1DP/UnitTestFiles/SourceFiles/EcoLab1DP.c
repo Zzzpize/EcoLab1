@@ -44,10 +44,8 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
     IEcoInterfaceBus1* pIBus = 0;
     /* Pointer to the memory management interface */
     IEcoMemoryAllocator1* pIMem = 0;
-    char_t* name = 0;
-    char_t* copyName = 0;
     /* Pointer to the tested interface */
-    IEcoLab1DP* pIEcoLab1DP = 0;
+    IEcoAdvancedMath* pIMath = 0;
 
     /* System interface check and creation */
     if (pISys == 0) {
@@ -81,26 +79,13 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
         goto Release;
     }
 
-    /* Memory block allocation */
-    name = (char_t *)pIMem->pVTbl->Alloc(pIMem, 10);
-
-    /* Fill the memory block */
-    pIMem->pVTbl->Fill(pIMem, name, 'a', 9);
-
-
     /* Getting the tested interface */
-    result = pIBus->pVTbl->QueryComponent(pIBus, &CID_EcoLab1DP, 0, &IID_IEcoLab1DP, (void**) &pIEcoLab1DP);
-    if (result != 0 || pIEcoLab1DP == 0) {
+    result = pIBus->pVTbl->QueryComponent(pIBus, &CID_EcoLab1DP, 0, &IID_IEcoAdvancedMath, (void**) &pIMath);
+    if (result != 0 || pIMath == 0) {
         /* Free interfaces in case of an error */
         goto Release;
     }
 
-
-    result = pIEcoLab1DP->pVTbl->MyFunction(pIEcoLab1DP, name, &copyName);
-
-
-    /* Free the memory block */
-    pIMem->pVTbl->Free(pIMem, name);
 
 Release:
 
@@ -115,8 +100,8 @@ Release:
     }
 
     /* Free the tested interface */
-    if (pIEcoLab1DP != 0) {
-        pIEcoLab1DP->pVTbl->Release(pIEcoLab1DP);
+    if (pIMath != 0) {
+        pIMath->pVTbl->Release(pIMath);
     }
 
 

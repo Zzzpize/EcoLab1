@@ -20,7 +20,7 @@
 #ifndef __C_ECOLAB1DP_H__
 #define __C_ECOLAB1DP_H__
 
-#include "IEcoLab1DP.h"
+#include "IEcoAdvancedMath.h"
 #include "IEcoSystem1.h"
 #include "IdEcoMemoryManager1.h"
 
@@ -28,8 +28,8 @@ typedef struct CEcoLab1DP_35D14A4A* CEcoLab1DP_35D14A4APtr_t;
 
 typedef struct CEcoLab1DP_35D14A4A {
 
-    /* IEcoLab1DP interface function table */
-    IEcoLab1DPVTbl* m_pVTblIEcoLab1DP;
+    /* IEcoAdvancedMath interface function table */
+    IEcoAdvancedMathVTbl* m_pVTblIEcoAdvancedMath;
 
 
     /* Instance initialization */
@@ -48,9 +48,6 @@ typedef struct CEcoLab1DP_35D14A4A {
 
     /* System interface */
     IEcoSystem1* m_pISys;
-
-    /* Instance data */
-    char_t* m_Name;
 
 } CEcoLab1DP_35D14A4A;
 
