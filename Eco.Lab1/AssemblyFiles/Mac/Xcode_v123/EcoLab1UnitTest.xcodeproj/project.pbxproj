@@ -238,6 +238,7 @@
 					../../../HeaderFiles,
 					../../../UnitTestFiles/HeaderFiles,
 					../../../SharedFiles,
+					../../../../Eco.Lab1DP/SharedFiles,
 					"$(ECO_FRAMEWORK)/Eco.FileSystemManagement1/SharedFiles",
 					"$(ECO_FRAMEWORK)/Eco.MemoryManager1/SharedFiles",
 					"$(ECO_FRAMEWORK)/Eco.Core1/SharedFiles",
@@ -251,6 +252,7 @@
 				);
 				LIBRARY_SEARCH_PATHS = (
 					"'../../../BuildFiles/Mac/$(ARCHS)/$(TARGET_NAME)$(CONFIGURATION)'",
+					"'../../../../Eco.Lab1DP/BuildFiles/Mac/$(ARCHS)/$(TARGET_NAME)$(CONFIGURATION)'",
 					"'$(ECO_FRAMEWORK)/Eco.System1/BuildFiles/Mac/$(ARCHS)/StaticRelease'",
 					"'$(ECO_FRAMEWORK)/Eco.InterfaceBus1/BuildFiles/Mac/$(ARCHS)/StaticRelease'",
 					"'$(ECO_FRAMEWORK)/Eco.MemoryManager1/BuildFiles/Mac/$(ARCHS)/StaticRelease'",
@@ -261,7 +263,7 @@
 					"'$(ECO_FRAMEWORK)/Eco.FileSystemManagement1/BuildFiles/Mac/$(ARCHS)/StaticRelease'",
 					"'$(ECO_FRAMEWORK)/Eco.System1/BuildFiles/Mac/$(ARCHS)/StaticRelease'",
 				);
-				OTHER_LDFLAGS = "";
+				OTHER_LDFLAGS = "-lAFC67744F1C343AC891CA5DA35D14A4A";
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
@@ -326,6 +328,7 @@
 					../../../HeaderFiles,
 					../../../UnitTestFiles/HeaderFiles,
 					../../../SharedFiles,
+					../../../../Eco.Lab1DP/SharedFiles,
 					"$(ECO_FRAMEWORK)/Eco.FileSystemManagement1/SharedFiles",
 					"$(ECO_FRAMEWORK)/Eco.MemoryManager1/SharedFiles",
 					"$(ECO_FRAMEWORK)/Eco.Core1/SharedFiles",
@@ -339,6 +342,7 @@
 				);
 				LIBRARY_SEARCH_PATHS = (
 					"'../../../BuildFiles/Mac/$(ARCHS)/$(TARGET_NAME)$(CONFIGURATION)'",
+					"'../../../../Eco.Lab1DP/BuildFiles/Mac/$(ARCHS)/$(TARGET_NAME)$(CONFIGURATION)'",
 					"'$(ECO_FRAMEWORK)/Eco.System1/BuildFiles/Mac/$(ARCHS)/StaticRelease'",
 					"'$(ECO_FRAMEWORK)/Eco.InterfaceBus1/BuildFiles/Mac/$(ARCHS)/StaticRelease'",
 					"'$(ECO_FRAMEWORK)/Eco.MemoryManager1/BuildFiles/Mac/$(ARCHS)/StaticRelease'",
@@ -349,7 +353,7 @@
 					"'$(ECO_FRAMEWORK)/Eco.FileSystemManagement1/BuildFiles/Mac/$(ARCHS)/StaticRelease'",
 					"'$(ECO_FRAMEWORK)/Eco.System1/BuildFiles/Mac/$(ARCHS)/StaticRelease'",
 				);
-				OTHER_LDFLAGS = "";
+				OTHER_LDFLAGS = "-lAFC67744F1C343AC891CA5DA35D14A4A";
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
