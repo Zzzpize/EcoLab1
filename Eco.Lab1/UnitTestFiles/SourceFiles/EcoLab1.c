@@ -26,6 +26,7 @@
 #include "IdEcoInterfaceBus1.h"
 #include "IdEcoFileSystemManagement1.h"
 #include "IdEcoLab1.h"
+#include "IdEcoLab1DP.h"
 
 #define BUF_POINTS 1001
 
@@ -297,6 +298,245 @@ static void TestErrors(IEcoAdvancedMath* m) {
     Check("код ошибки из правой части возвращается клиенту", m->pVTbl->Solve(m, Broken, 0, 1, 0.0, 1.0, y0, 0, 11, g_t, g_y, &st) == 42);
 }
 
+static double_t OscillatorMaxError(uint32_t points) {
+    double_t maxErr = 0;
+    double_t err = 0;
+    uint32_t i = 0;
+
+    for (i = 0; i < points; i++) {
+        err = fabs(g_y[2 * i] - cos(g_t[i]));
+        if (err > maxErr) {
+            maxErr = err;
+        }
+        err = fabs(g_y[2 * i + 1] + sin(g_t[i]));
+        if (err > maxErr) {
+            maxErr = err;
+        }
+    }
+    return maxErr;
+}
+
+static void TestDpTolerance(IEcoAdvancedMath* m) {
+    EcoOdeOptions opt;
+    EcoOdeStats st;
+    double_t y0[2];
+    double_t tol = 0;
+    double_t maxErr = 0;
+    uint32_t prevSteps = 0;
+    int ok = 1;
+    int grows = 1;
+    int16_t r = 0;
+
+    printf("\n8. Дорман-Принс: осциллятор на [0, 10] при разных допусках\n");
+    printf("  %8s %8s %10s %12s %12s\n", "RelTol", "steps", "rejected", "f calls", "max |err|");
+    y0[0] = 1.0;
+    y0[1] = 0.0;
+    opt.Step = 0;
+    opt.MaxSteps = 0;
+    for (tol = 1e-3; tol > 0.5e-10; tol /= 10) {
+        opt.RelTol = tol;
+        opt.AbsTol = tol * 1e-3;
+        r = m->pVTbl->Solve(m, Oscillator, 0, 2, 0.0, 10.0, y0, &opt, BUF_POINTS, g_t, g_y, &st);
+        if (r != 0) {
+            ok = 0;
+            break;
+        }
+        maxErr = OscillatorMaxError(st.Points);
+        printf("  %8.0e %8u %10u %12u %12.3e\n", tol, (unsigned)st.Steps, (unsigned)st.Rejected, (unsigned)st.Evaluations, maxErr);
+        if (maxErr > 10 * tol || g_t[st.Points - 1] != 10.0) {
+            ok = 0;
+        }
+        if (st.Steps <= prevSteps) {
+            grows = 0;
+        }
+        prevSteps = st.Steps;
+    }
+    Check("ошибка не превышает 10 * RelTol на всех допусках", ok);
+    Check("при ужесточении допуска число шагов растет", grows);
+}
+
+static void TestDpDefaults(IEcoAdvancedMath* m) {
+    DecayParams p;
+    EcoOdeStats st;
+    double_t y0[2];
+    double_t e1 = exp(-2.0);
+    double_t e3 = exp(-6.0);
+    double_t err = 0;
+    EcoOdeOptions opt;
+    int16_t r = 0;
+
+    printf("\n9. Дорман-Принс: допуски по умолчанию и линейная система\n");
+    p.k = 1.0;
+    y0[0] = 1.0;
+    r = m->pVTbl->Solve(m, Decay, &p, 1, 0.0, 1.0, y0, 0, BUF_POINTS, g_t, g_y, &st);
+    err = fabs(g_y[st.Points - 1] - exp(-1.0));
+    printf("  y' = -y без параметров: шагов %u, y(1) = %.10f, |err| = %.3e\n", (unsigned)st.Steps, g_y[st.Points - 1], err);
+    Check("opt = NULL: RelTol 1e-3, AbsTol 1e-6, ошибка меньше 1e-3", r == 0 && err < 1e-3 && st.Steps < 20);
+
+    y0[0] = 1.0;
+    y0[1] = 0.0;
+    opt.Step = 0;
+    opt.RelTol = 1e-9;
+    opt.AbsTol = 1e-12;
+    opt.MaxSteps = 0;
+    r = m->pVTbl->Solve(m, Linear, 0, 2, 0.0, 2.0, y0, &opt, BUF_POINTS, g_t, g_y, &st);
+    err = fabs(g_y[2 * (st.Points - 1)] - (0.5 * e1 + 0.5 * e3));
+    if (fabs(g_y[2 * (st.Points - 1) + 1] - (0.5 * e1 - 0.5 * e3)) > err) {
+        err = fabs(g_y[2 * (st.Points - 1) + 1] - (0.5 * e1 - 0.5 * e3));
+    }
+    printf("  система 2x2 при RelTol 1e-9: шагов %u, |err| = %.3e\n", (unsigned)st.Steps, err);
+    Check("линейная система совпадает с аналитическим решением до 1e-8", r == 0 && err < 1e-8);
+}
+
+static void TestDpPrecision(IEcoAdvancedMath* m) {
+    EcoOdeOptions opt;
+    EcoOdeStats stD;
+    EcoOdeStats stF;
+    EcoOdeStats stL;
+    double_t y0[2];
+    float_t y0f[2];
+    ldouble_t y0l[2];
+    double_t exact = cos(10.0);
+    double_t errD = 0;
+    double_t errF = 0;
+    double_t errL = 0;
+    int16_t rD = 0;
+    int16_t rF = 0;
+    int16_t rL = 0;
+
+    printf("\n10. Дорман-Принс: float / double / long double, осциллятор на [0, 10]\n");
+    y0[0] = 1.0;
+    y0[1] = 0.0;
+    y0f[0] = 1.0f;
+    y0f[1] = 0.0f;
+    y0l[0] = 1.0L;
+    y0l[1] = 0.0L;
+    opt.Step = 0;
+    opt.MaxSteps = 0;
+    opt.RelTol = 1e-6;
+    opt.AbsTol = 1e-9;
+    rF = m->pVTbl->Solvef(m, OscillatorF, 0, 2, 0.0f, 10.0f, y0f, &opt, BUF_POINTS, g_tf, g_yf, &stF);
+    errF = fabs((double_t)g_yf[2 * (stF.Points - 1)] - exact);
+    opt.RelTol = 1e-9;
+    opt.AbsTol = 1e-12;
+    rD = m->pVTbl->Solve(m, Oscillator, 0, 2, 0.0, 10.0, y0, &opt, BUF_POINTS, g_t, g_y, &stD);
+    errD = fabs(g_y[2 * (stD.Points - 1)] - exact);
+    opt.RelTol = 1e-12;
+    opt.AbsTol = 1e-15;
+    rL = m->pVTbl->Solvel(m, OscillatorL, 0, 2, 0.0L, 10.0L, y0l, &opt, BUF_POINTS, g_tl, g_yl, &stL);
+    errL = fabs((double_t)g_yl[2 * (stL.Points - 1)] - exact);
+    printf("  %12s %8s %8s %12s\n", "type", "RelTol", "steps", "|err|");
+    printf("  %12s %8s %8u %12.3e\n", "float", "1e-06", (unsigned)stF.Steps, errF);
+    printf("  %12s %8s %8u %12.3e\n", "double", "1e-09", (unsigned)stD.Steps, errD);
+    printf("  %12s %8s %8u %12.3e\n", "long double", "1e-12", (unsigned)stL.Steps, errL);
+    Check("все три версии отработали без ошибок", rD == 0 && rF == 0 && rL == 0);
+    Check("float: ошибка меньше 1e-5", errF < 1e-5);
+    Check("double: ошибка меньше 1e-8", errD < 1e-8);
+    Check("long double: ошибка меньше 1e-11", errL < 1e-11);
+}
+
+static void TestDpStepAndStats(IEcoAdvancedMath* m) {
+    DecayParams p;
+    EcoOdeOptions opt;
+    EcoOdeStats st;
+    double_t y[2];
+    double_t yOut[2];
+    uint32_t calls = 0;
+    int16_t r = 0;
+
+    printf("\n11. Дорман-Принс: один шаг, интегрирование назад, статистика\n");
+    y[0] = 1.0;
+    y[1] = 0.0;
+    r = m->pVTbl->Step(m, Oscillator, 0, 2, 0.0, 0.1, y, yOut);
+    printf("  шаг h = 0.1: x = %.15f, cos(0.1) = %.15f, |err| = %.3e\n", yOut[0], cos(0.1), fabs(yOut[0] - cos(0.1)));
+    Check("один шаг 5-го порядка: ошибка меньше 1e-9", r == 0 && fabs(yOut[0] - cos(0.1)) < 1e-9 && fabs(yOut[1] + sin(0.1)) < 1e-9);
+
+    opt.Step = 0;
+    opt.RelTol = 1e-9;
+    opt.AbsTol = 1e-12;
+    opt.MaxSteps = 0;
+    p.k = 1.0;
+    y[0] = exp(-1.0);
+    r = m->pVTbl->Solve(m, Decay, &p, 1, 1.0, 0.0, y, &opt, BUF_POINTS, g_t, g_y, &st);
+    printf("  назад от t = 1 до t = 0: y(0) = %.15f\n", g_y[st.Points - 1]);
+    Check("интегрирование назад по времени возвращает y(0) = 1", r == 0 && g_t[st.Points - 1] == 0.0 && fabs(g_y[st.Points - 1] - 1.0) < 1e-7);
+
+    y[0] = 1.0;
+    y[1] = 0.0;
+    opt.RelTol = 1e-6;
+    opt.AbsTol = 1e-9;
+    g_calls = 0;
+    r = m->pVTbl->Solve(m, Oscillator, 0, 2, 0.0, 10.0, y, &opt, BUF_POINTS, g_t, g_y, &st);
+    calls = g_calls;
+    printf("  Steps = %u, Rejected = %u, Evaluations = %u, реальных вызовов = %u\n", (unsigned)st.Steps, (unsigned)st.Rejected, (unsigned)st.Evaluations, (unsigned)calls);
+    Check("статистика: 1 + 6 вызовов на каждую попытку шага", r == 0 && st.Evaluations == calls && st.Evaluations == 1 + 6 * (st.Steps + st.Rejected) && st.Points == st.Steps + 1);
+}
+
+static void TestDpErrors(IEcoAdvancedMath* m) {
+    EcoOdeOptions opt;
+    EcoOdeStats st;
+    double_t y0[2];
+
+    printf("\n12. Дорман-Принс: обработка ошибок\n");
+    y0[0] = 1.0;
+    y0[1] = 0.0;
+    opt.Step = 0;
+    opt.RelTol = 1e-10;
+    opt.AbsTol = 1e-13;
+    opt.MaxSteps = 0;
+    Check("f = NULL -> ERR_ECO_POINTER", m->pVTbl->Solve(m, 0, 0, 2, 0.0, 1.0, y0, 0, 11, g_t, g_y, &st) == ERR_ECO_POINTER);
+    Check("tOut = NULL -> ERR_ECO_POINTER", m->pVTbl->Solve(m, Oscillator, 0, 2, 0.0, 1.0, y0, 0, 11, 0, g_y, &st) == ERR_ECO_POINTER);
+    Check("y = NULL в Step -> ERR_ECO_POINTER", m->pVTbl->Step(m, Oscillator, 0, 2, 0.0, 0.1, 0, y0) == ERR_ECO_POINTER);
+    Check("n = 0 -> ERR_ECO_INVALIDARG", m->pVTbl->Solve(m, Oscillator, 0, 0, 0.0, 1.0, y0, 0, 11, g_t, g_y, &st) == ERR_ECO_INVALIDARG);
+    Check("t0 = t1 -> ERR_ECO_INVALIDARG", m->pVTbl->Solve(m, Oscillator, 0, 2, 1.0, 1.0, y0, 0, 11, g_t, g_y, &st) == ERR_ECO_INVALIDARG);
+    Check("не хватает места под результат -> ERR_ECO_INDEX_OUT_OF_BOUNDS", m->pVTbl->Solve(m, Oscillator, 0, 2, 0.0, 10.0, y0, &opt, 6, g_t, g_y, &st) == ERR_ECO_INDEX_OUT_OF_BOUNDS && st.Points == 6);
+    opt.MaxSteps = 3;
+    Check("превышен MaxSteps -> ERR_ECO_INDEX_OUT_OF_BOUNDS", m->pVTbl->Solve(m, Oscillator, 0, 2, 0.0, 10.0, y0, &opt, BUF_POINTS, g_t, g_y, &st) == ERR_ECO_INDEX_OUT_OF_BOUNDS && st.Steps == 3);
+    Check("код ошибки из правой части возвращается клиенту", m->pVTbl->Solve(m, Broken, 0, 1, 0.0, 1.0, y0, 0, 11, g_t, g_y, &st) == 42);
+}
+
+static void TestCompare(IEcoAdvancedMath* rk4, IEcoAdvancedMath* dp) {
+    EcoOdeOptions opt;
+    EcoOdeStats st;
+    double_t y0[2];
+    double_t errRk = 0;
+    double_t errDp = 0;
+    uint32_t callsRk = 0;
+    uint32_t callsDp = 0;
+    uint32_t steps = 0;
+    int16_t r = 0;
+    int ok = 1;
+
+    printf("\n13. Сравнение методов: осциллятор на [0, 10]\n");
+    printf("  %14s %12s %8s %10s %12s\n", "method", "param", "steps", "f calls", "max |err|");
+    y0[0] = 1.0;
+    y0[1] = 0.0;
+    for (steps = 125; steps <= 1000; steps *= 2) {
+        r = rk4->pVTbl->Solve(rk4, Oscillator, 0, 2, 0.0, 10.0, y0, 0, steps + 1, g_t, g_y, &st);
+        if (r != 0) {
+            ok = 0;
+        }
+        errRk = OscillatorMaxError(st.Points);
+        callsRk = st.Evaluations;
+        printf("  %14s %8s%4u %8u %10u %12.3e\n", "RK4", "N = ", (unsigned)steps, (unsigned)st.Steps, (unsigned)callsRk, errRk);
+    }
+    opt.Step = 0;
+    opt.MaxSteps = 0;
+    for (opt.RelTol = 1e-5; opt.RelTol > 0.5e-9; opt.RelTol /= 100) {
+        opt.AbsTol = opt.RelTol * 1e-3;
+        r = dp->pVTbl->Solve(dp, Oscillator, 0, 2, 0.0, 10.0, y0, &opt, BUF_POINTS, g_t, g_y, &st);
+        if (r != 0) {
+            ok = 0;
+        }
+        errDp = OscillatorMaxError(st.Points);
+        callsDp = st.Evaluations;
+        printf("  %14s %6s%6.0e %8u %10u %12.3e\n", "Dormand-Prince", "tol = ", opt.RelTol, (unsigned)st.Steps, (unsigned)callsDp, errDp);
+    }
+    printf("  точность ~1e-9: RK4 %u вызовов правой части, Дорман-Принс %u\n", (unsigned)callsRk, (unsigned)callsDp);
+    Check("оба компонента решают задачу через один интерфейс", ok);
+    Check("при точности ~1e-9 Дорман-Принс требует меньше вызовов правой части", ok && errRk < 1e-9 && errDp < 1e-9 && callsDp < callsRk);
+}
+
 /*
  *
  * <summary>
@@ -318,6 +558,7 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
     IEcoMemoryAllocator1* pIMem = 0;
     /* Pointer to the tested interface */
     IEcoAdvancedMath* pIMath = 0;
+    IEcoAdvancedMath* pIMathDP = 0;
 
     /* System interface check and creation */
     if (pISys == 0) {
@@ -341,6 +582,10 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
         /* Free in case of an error */
         goto Release;
     }
+    result = pIBus->pVTbl->RegisterComponent(pIBus, &CID_EcoLab1DP, (IEcoUnknown*)GetIEcoComponentFactoryPtr_AFC67744F1C343AC891CA5DA35D14A4A);
+    if (result != 0 ) {
+        goto Release;
+    }
 #endif
     /* Getting the memory management interface */
     result = pIBus->pVTbl->QueryComponent(pIBus, &CID_EcoMemoryManager1, 0, &IID_IEcoMemoryAllocator1, (void**) &pIMem);
@@ -357,6 +602,10 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
         /* Free interfaces in case of an error */
         goto Release;
     }
+    result = pIBus->pVTbl->QueryComponent(pIBus, &CID_EcoLab1DP, 0, &IID_IEcoAdvancedMath, (void**) &pIMathDP);
+    if (result != 0 || pIMathDP == 0) {
+        goto Release;
+    }
 
     g_t = (double_t*)pIMem->pVTbl->Alloc(pIMem, BUF_POINTS * sizeof(double_t));
     g_y = (double_t*)pIMem->pVTbl->Alloc(pIMem, 2 * BUF_POINTS * sizeof(double_t));
@@ -369,7 +618,7 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
         goto Release;
     }
 
-    printf("Unit-тест компонента EcoLab1: метод Рунге-Кутты 4-го порядка\n");
+    printf("Unit-тест компонентов EcoLab1 (Рунге-Кутта 4) и EcoLab1DP (Дорман-Принс)\n");
     TestDecayOrder(pIMath);
     TestOscillator(pIMath);
     TestLinearSystem(pIMath);
@@ -377,6 +626,12 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
     TestStep(pIMath);
     TestOptionsAndBackward(pIMath);
     TestErrors(pIMath);
+    TestDpTolerance(pIMathDP);
+    TestDpDefaults(pIMathDP);
+    TestDpPrecision(pIMathDP);
+    TestDpStepAndStats(pIMathDP);
+    TestDpErrors(pIMathDP);
+    TestCompare(pIMath, pIMathDP);
     printf("\nИтого: пройдено %d, провалено %d\n", g_passed, g_failed);
     result = g_failed == 0 ? 0 : -1;
 
@@ -417,6 +672,9 @@ Release:
     /* Free the tested interface */
     if (pIMath != 0) {
         pIMath->pVTbl->Release(pIMath);
+    }
+    if (pIMathDP != 0) {
+        pIMathDP->pVTbl->Release(pIMathDP);
     }
 
 
