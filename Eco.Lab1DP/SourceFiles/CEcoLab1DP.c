@@ -147,49 +147,49 @@ static int16_t CEcoLab1DP_35D14A4A_DpCore(/* in */ EcoOdeFunc f, /* in */ voidpt
     uint32_t i = 0;
 
     for (i = 0; i < n; i++) {
-        tmp[i] = y[i] + h * (k1[i] / 5);
+        tmp[i] = y[i] + h * (k1[i] * (1.0 / 5));
     }
     result = f(ctx, t + h / 5, tmp, k2, n);
     if (result != 0) {
         return result;
     }
     for (i = 0; i < n; i++) {
-        tmp[i] = y[i] + h * (k1[i] * 3 / 40 + k2[i] * 9 / 40);
+        tmp[i] = y[i] + h * (k1[i] * (3.0 / 40) + k2[i] * (9.0 / 40));
     }
     result = f(ctx, t + h * 3 / 10, tmp, k3, n);
     if (result != 0) {
         return result;
     }
     for (i = 0; i < n; i++) {
-        tmp[i] = y[i] + h * (k1[i] * 44 / 45 - k2[i] * 56 / 15 + k3[i] * 32 / 9);
+        tmp[i] = y[i] + h * (k1[i] * (44.0 / 45) - k2[i] * (56.0 / 15) + k3[i] * (32.0 / 9));
     }
     result = f(ctx, t + h * 4 / 5, tmp, k4, n);
     if (result != 0) {
         return result;
     }
     for (i = 0; i < n; i++) {
-        tmp[i] = y[i] + h * (k1[i] * 19372 / 6561 - k2[i] * 25360 / 2187 + k3[i] * 64448 / 6561 - k4[i] * 212 / 729);
+        tmp[i] = y[i] + h * (k1[i] * (19372.0 / 6561) - k2[i] * (25360.0 / 2187) + k3[i] * (64448.0 / 6561) - k4[i] * (212.0 / 729));
     }
     result = f(ctx, t + h * 8 / 9, tmp, k5, n);
     if (result != 0) {
         return result;
     }
     for (i = 0; i < n; i++) {
-        tmp[i] = y[i] + h * (k1[i] * 9017 / 3168 - k2[i] * 355 / 33 + k3[i] * 46732 / 5247 + k4[i] * 49 / 176 - k5[i] * 5103 / 18656);
+        tmp[i] = y[i] + h * (k1[i] * (9017.0 / 3168) - k2[i] * (355.0 / 33) + k3[i] * (46732.0 / 5247) + k4[i] * (49.0 / 176) - k5[i] * (5103.0 / 18656));
     }
     result = f(ctx, t + h, tmp, k6, n);
     if (result != 0) {
         return result;
     }
     for (i = 0; i < n; i++) {
-        yNew[i] = y[i] + h * (k1[i] * 35 / 384 + k3[i] * 500 / 1113 + k4[i] * 125 / 192 - k5[i] * 2187 / 6784 + k6[i] * 11 / 84);
+        yNew[i] = y[i] + h * (k1[i] * (35.0 / 384) + k3[i] * (500.0 / 1113) + k4[i] * (125.0 / 192) - k5[i] * (2187.0 / 6784) + k6[i] * (11.0 / 84));
     }
     result = f(ctx, t + h, yNew, k7, n);
     if (result != 0) {
         return result;
     }
     for (i = 0; i < n; i++) {
-        errv[i] = h * (k1[i] * 71 / 57600 - k3[i] * 71 / 16695 + k4[i] * 71 / 1920 - k5[i] * 17253 / 339200 + k6[i] * 22 / 525 - k7[i] / 40);
+        errv[i] = h * (k1[i] * (71.0 / 57600) - k3[i] * (71.0 / 16695) + k4[i] * (71.0 / 1920) - k5[i] * (17253.0 / 339200) + k6[i] * (22.0 / 525) - k7[i] * (1.0 / 40));
     }
     return ERR_ECO_SUCCESS;
 }
@@ -436,49 +436,49 @@ static int16_t CEcoLab1DP_35D14A4A_DpCoref(/* in */ EcoOdeFuncF f, /* in */ void
     uint32_t i = 0;
 
     for (i = 0; i < n; i++) {
-        tmp[i] = y[i] + h * (k1[i] / 5);
+        tmp[i] = y[i] + h * (k1[i] * (1.0f / 5));
     }
     result = f(ctx, t + h / 5, tmp, k2, n);
     if (result != 0) {
         return result;
     }
     for (i = 0; i < n; i++) {
-        tmp[i] = y[i] + h * (k1[i] * 3 / 40 + k2[i] * 9 / 40);
+        tmp[i] = y[i] + h * (k1[i] * (3.0f / 40) + k2[i] * (9.0f / 40));
     }
     result = f(ctx, t + h * 3 / 10, tmp, k3, n);
     if (result != 0) {
         return result;
     }
     for (i = 0; i < n; i++) {
-        tmp[i] = y[i] + h * (k1[i] * 44 / 45 - k2[i] * 56 / 15 + k3[i] * 32 / 9);
+        tmp[i] = y[i] + h * (k1[i] * (44.0f / 45) - k2[i] * (56.0f / 15) + k3[i] * (32.0f / 9));
     }
     result = f(ctx, t + h * 4 / 5, tmp, k4, n);
     if (result != 0) {
         return result;
     }
     for (i = 0; i < n; i++) {
-        tmp[i] = y[i] + h * (k1[i] * 19372 / 6561 - k2[i] * 25360 / 2187 + k3[i] * 64448 / 6561 - k4[i] * 212 / 729);
+        tmp[i] = y[i] + h * (k1[i] * (19372.0f / 6561) - k2[i] * (25360.0f / 2187) + k3[i] * (64448.0f / 6561) - k4[i] * (212.0f / 729));
     }
     result = f(ctx, t + h * 8 / 9, tmp, k5, n);
     if (result != 0) {
         return result;
     }
     for (i = 0; i < n; i++) {
-        tmp[i] = y[i] + h * (k1[i] * 9017 / 3168 - k2[i] * 355 / 33 + k3[i] * 46732 / 5247 + k4[i] * 49 / 176 - k5[i] * 5103 / 18656);
+        tmp[i] = y[i] + h * (k1[i] * (9017.0f / 3168) - k2[i] * (355.0f / 33) + k3[i] * (46732.0f / 5247) + k4[i] * (49.0f / 176) - k5[i] * (5103.0f / 18656));
     }
     result = f(ctx, t + h, tmp, k6, n);
     if (result != 0) {
         return result;
     }
     for (i = 0; i < n; i++) {
-        yNew[i] = y[i] + h * (k1[i] * 35 / 384 + k3[i] * 500 / 1113 + k4[i] * 125 / 192 - k5[i] * 2187 / 6784 + k6[i] * 11 / 84);
+        yNew[i] = y[i] + h * (k1[i] * (35.0f / 384) + k3[i] * (500.0f / 1113) + k4[i] * (125.0f / 192) - k5[i] * (2187.0f / 6784) + k6[i] * (11.0f / 84));
     }
     result = f(ctx, t + h, yNew, k7, n);
     if (result != 0) {
         return result;
     }
     for (i = 0; i < n; i++) {
-        errv[i] = h * (k1[i] * 71 / 57600 - k3[i] * 71 / 16695 + k4[i] * 71 / 1920 - k5[i] * 17253 / 339200 + k6[i] * 22 / 525 - k7[i] / 40);
+        errv[i] = h * (k1[i] * (71.0f / 57600) - k3[i] * (71.0f / 16695) + k4[i] * (71.0f / 1920) - k5[i] * (17253.0f / 339200) + k6[i] * (22.0f / 525) - k7[i] * (1.0f / 40));
     }
     return ERR_ECO_SUCCESS;
 }
@@ -725,49 +725,49 @@ static int16_t CEcoLab1DP_35D14A4A_DpCorel(/* in */ EcoOdeFuncL f, /* in */ void
     uint32_t i = 0;
 
     for (i = 0; i < n; i++) {
-        tmp[i] = y[i] + h * (k1[i] / 5);
+        tmp[i] = y[i] + h * (k1[i] * (1.0L / 5));
     }
     result = f(ctx, t + h / 5, tmp, k2, n);
     if (result != 0) {
         return result;
     }
     for (i = 0; i < n; i++) {
-        tmp[i] = y[i] + h * (k1[i] * 3 / 40 + k2[i] * 9 / 40);
+        tmp[i] = y[i] + h * (k1[i] * (3.0L / 40) + k2[i] * (9.0L / 40));
     }
     result = f(ctx, t + h * 3 / 10, tmp, k3, n);
     if (result != 0) {
         return result;
     }
     for (i = 0; i < n; i++) {
-        tmp[i] = y[i] + h * (k1[i] * 44 / 45 - k2[i] * 56 / 15 + k3[i] * 32 / 9);
+        tmp[i] = y[i] + h * (k1[i] * (44.0L / 45) - k2[i] * (56.0L / 15) + k3[i] * (32.0L / 9));
     }
     result = f(ctx, t + h * 4 / 5, tmp, k4, n);
     if (result != 0) {
         return result;
     }
     for (i = 0; i < n; i++) {
-        tmp[i] = y[i] + h * (k1[i] * 19372 / 6561 - k2[i] * 25360 / 2187 + k3[i] * 64448 / 6561 - k4[i] * 212 / 729);
+        tmp[i] = y[i] + h * (k1[i] * (19372.0L / 6561) - k2[i] * (25360.0L / 2187) + k3[i] * (64448.0L / 6561) - k4[i] * (212.0L / 729));
     }
     result = f(ctx, t + h * 8 / 9, tmp, k5, n);
     if (result != 0) {
         return result;
     }
     for (i = 0; i < n; i++) {
-        tmp[i] = y[i] + h * (k1[i] * 9017 / 3168 - k2[i] * 355 / 33 + k3[i] * 46732 / 5247 + k4[i] * 49 / 176 - k5[i] * 5103 / 18656);
+        tmp[i] = y[i] + h * (k1[i] * (9017.0L / 3168) - k2[i] * (355.0L / 33) + k3[i] * (46732.0L / 5247) + k4[i] * (49.0L / 176) - k5[i] * (5103.0L / 18656));
     }
     result = f(ctx, t + h, tmp, k6, n);
     if (result != 0) {
         return result;
     }
     for (i = 0; i < n; i++) {
-        yNew[i] = y[i] + h * (k1[i] * 35 / 384 + k3[i] * 500 / 1113 + k4[i] * 125 / 192 - k5[i] * 2187 / 6784 + k6[i] * 11 / 84);
+        yNew[i] = y[i] + h * (k1[i] * (35.0L / 384) + k3[i] * (500.0L / 1113) + k4[i] * (125.0L / 192) - k5[i] * (2187.0L / 6784) + k6[i] * (11.0L / 84));
     }
     result = f(ctx, t + h, yNew, k7, n);
     if (result != 0) {
         return result;
     }
     for (i = 0; i < n; i++) {
-        errv[i] = h * (k1[i] * 71 / 57600 - k3[i] * 71 / 16695 + k4[i] * 71 / 1920 - k5[i] * 17253 / 339200 + k6[i] * 22 / 525 - k7[i] / 40);
+        errv[i] = h * (k1[i] * (71.0L / 57600) - k3[i] * (71.0L / 16695) + k4[i] * (71.0L / 1920) - k5[i] * (17253.0L / 339200) + k6[i] * (22.0L / 525) - k7[i] * (1.0L / 40));
     }
     return ERR_ECO_SUCCESS;
 }
