@@ -682,6 +682,195 @@ static void TestPerformance(IEcoAdvancedMath* rk4, IEcoAdvancedMath* dp) {
     Check("замеры выполнены, Дорман-Принс везде делает меньше вызовов правой части", ok);
 }
 
+static int g_eof = 0;
+
+static void SkipLine(void) {
+    int c = 0;
+
+    do {
+        c = getchar();
+    } while (c != '\n' && c != EOF);
+}
+
+static int ReadInt(const char* prompt, int lo, int hi) {
+    int value = 0;
+    int got = 0;
+
+    while (!g_eof) {
+        printf("%s", prompt);
+        fflush(stdout);
+        got = scanf("%d", &value);
+        if (got == EOF) {
+            g_eof = 1;
+            break;
+        }
+        if (got == 1 && value >= lo && value <= hi) {
+            return value;
+        }
+        SkipLine();
+        printf("Нужно целое число от %d до %d\n", lo, hi);
+    }
+    return lo;
+}
+
+static double_t ReadDouble(const char* prompt, double_t lo, double_t hi) {
+    double_t value = 0;
+    int got = 0;
+
+    while (!g_eof) {
+        printf("%s", prompt);
+        fflush(stdout);
+        got = scanf("%lf", &value);
+        if (got == EOF) {
+            g_eof = 1;
+            break;
+        }
+        if (got == 1 && value >= lo && value <= hi) {
+            return value;
+        }
+        SkipLine();
+        printf("Нужно число от %g до %g\n", lo, hi);
+    }
+    return lo;
+}
+
+static void PrintSolution(uint32_t n, const EcoOdeStats* st) {
+    uint32_t stride = (st->Points + 18) / 20;
+    uint32_t i = 0;
+    uint32_t j = 0;
+
+    printf("%12s", "t");
+    for (j = 0; j < n; j++) {
+        printf("%19s%u", "y", (unsigned)(j + 1));
+    }
+    printf("\n");
+    for (i = 0; i < st->Points; i += stride) {
+        if (i + stride >= st->Points) {
+            i = st->Points - 1;
+        }
+        printf("%12.6f", g_t[i]);
+        for (j = 0; j < n; j++) {
+            printf("%20.12f", g_y[n * i + j]);
+        }
+        printf("\n");
+    }
+}
+
+static void Calculator(IEcoInterfaceBus1* pIBus) {
+    IEcoAdvancedMath* m = 0;
+    EcoOdeFunc funcs[5];
+    uint32_t dims[5];
+    DecayParams p;
+    EcoOdeOptions opt;
+    EcoOdeStats st;
+    double_t y0[2];
+    double_t t1 = 0;
+    double_t exact = 0;
+    uint32_t capacity = 0;
+    uint32_t n = 0;
+    uint32_t i = 0;
+    int task = 0;
+    int method = 0;
+    int16_t r = 0;
+
+    funcs[0] = Decay;
+    funcs[1] = Oscillator;
+    funcs[2] = VanDerPol;
+    funcs[3] = LotkaVolterra;
+    funcs[4] = Pendulum;
+    dims[0] = 1;
+    dims[1] = 2;
+    dims[2] = 2;
+    dims[3] = 2;
+    dims[4] = 2;
+
+    while (!g_eof) {
+        printf("\nЗадача:\n");
+        printf("1 - y' = -k*y\n");
+        printf("2 - осциллятор y1' = y2, y2' = -y1\n");
+        printf("3 - Ван дер Поль y1' = y2, y2' = (1 - y1^2)*y2 - y1\n");
+        printf("4 - Лотка-Вольтерра y1' = 1.5*y1 - y1*y2, y2' = y1*y2 - 3*y2\n");
+        printf("5 - маятник y1' = y2, y2' = -sin(y1)\n");
+        printf("0 - назад\n");
+        task = ReadInt("> ", 0, 5);
+        if (g_eof || task == 0) {
+            break;
+        }
+        n = dims[task - 1];
+        p.k = 1.0;
+        if (task == 1) {
+            p.k = ReadDouble("k = ", -100.0, 100.0);
+        }
+        for (i = 0; i < n; i++) {
+            printf("y%u(0)", (unsigned)(i + 1));
+            y0[i] = ReadDouble(" = ", -1e6, 1e6);
+        }
+        t1 = ReadDouble("Решать от t = 0 до t = ", 0.001, 1000.0);
+        method = ReadInt("Метод: 1 - Рунге-Кутта 4 (EcoLab1), 2 - Дорман-Принс (EcoLab1DP): ", 1, 2);
+        opt.Step = 0;
+        opt.RelTol = 0;
+        opt.AbsTol = 0;
+        opt.MaxSteps = 0;
+        if (method == 1) {
+            capacity = (uint32_t)ReadInt("Число шагов (1..1000): ", 1, BUF_POINTS - 1) + 1;
+        }
+        else {
+            opt.RelTol = ReadDouble("Относительная точность RelTol (1e-12..0.1): ", 1e-12, 0.1);
+            opt.AbsTol = opt.RelTol * 1e-3;
+            capacity = BUF_POINTS;
+        }
+        if (g_eof) {
+            break;
+        }
+
+        m = 0;
+        r = pIBus->pVTbl->QueryComponent(pIBus, method == 1 ? &CID_EcoLab1 : &CID_EcoLab1DP, 0, &IID_IEcoAdvancedMath, (void**) &m);
+        if (r != 0 || m == 0) {
+            printf("Компонент не найден, код %d\n", r);
+            continue;
+        }
+        r = m->pVTbl->Solve(m, funcs[task - 1], &p, n, 0.0, t1, y0, &opt, capacity, g_t, g_y, &st);
+        m->pVTbl->Release(m);
+
+        if (st.Points > 1) {
+            PrintSolution(n, &st);
+            printf("Шагов %u, отклонено %u, вызовов правой части %u\n", (unsigned)st.Steps, (unsigned)st.Rejected, (unsigned)st.Evaluations);
+        }
+        if (r == ERR_ECO_INDEX_OUT_OF_BOUNDS) {
+            printf("Решение не дошло до t = %g: не хватило %d точек, уменьшите точность или отрезок\n", t1, BUF_POINTS);
+        }
+        else if (r != 0) {
+            printf("Ошибка, код %d\n", r);
+        }
+        else if (task == 1 || task == 2) {
+            exact = task == 1 ? y0[0] * exp(-p.k * t1) : y0[0] * cos(t1) + y0[1] * sin(t1);
+            printf("Точное y1(%g) = %.12f, ошибка %.3e\n", t1, exact, fabs(g_y[n * (st.Points - 1)] - exact));
+        }
+    }
+}
+
+static void RunAllTests(IEcoAdvancedMath* pIMath, IEcoAdvancedMath* pIMathDP) {
+    g_passed = 0;
+    g_failed = 0;
+    printf("Unit-тест компонентов EcoLab1 (Рунге-Кутта 4) и EcoLab1DP (Дорман-Принс)\n");
+    TestDecayOrder(pIMath);
+    TestOscillator(pIMath);
+    TestLinearSystem(pIMath);
+    TestPrecision(pIMath);
+    TestStep(pIMath);
+    TestOptionsAndBackward(pIMath);
+    TestErrors(pIMath);
+    TestDpTolerance(pIMathDP);
+    TestDpDefaults(pIMathDP);
+    TestDpPrecision(pIMathDP);
+    TestDpStepAndStats(pIMathDP);
+    TestDpErrors(pIMathDP);
+    TestCompare(pIMath, pIMathDP);
+    TestNonlinear(pIMath, pIMathDP);
+    TestPerformance(pIMath, pIMathDP);
+    printf("\nИтого: пройдено %d, провалено %d\n", g_passed, g_failed);
+}
+
 /*
  *
  * <summary>
@@ -704,6 +893,7 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
     /* Pointer to the tested interface */
     IEcoAdvancedMath* pIMath = 0;
     IEcoAdvancedMath* pIMathDP = 0;
+    int mode = 0;
 
     /* System interface check and creation */
     if (pISys == 0) {
@@ -763,24 +953,21 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
         goto Release;
     }
 
-    printf("Unit-тест компонентов EcoLab1 (Рунге-Кутта 4) и EcoLab1DP (Дорман-Принс)\n");
-    TestDecayOrder(pIMath);
-    TestOscillator(pIMath);
-    TestLinearSystem(pIMath);
-    TestPrecision(pIMath);
-    TestStep(pIMath);
-    TestOptionsAndBackward(pIMath);
-    TestErrors(pIMath);
-    TestDpTolerance(pIMathDP);
-    TestDpDefaults(pIMathDP);
-    TestDpPrecision(pIMathDP);
-    TestDpStepAndStats(pIMathDP);
-    TestDpErrors(pIMathDP);
-    TestCompare(pIMath, pIMathDP);
-    TestNonlinear(pIMath, pIMathDP);
-    TestPerformance(pIMath, pIMathDP);
-    printf("\nИтого: пройдено %d, провалено %d\n", g_passed, g_failed);
-    result = g_failed == 0 ? 0 : -1;
+    result = 0;
+    while (!g_eof) {
+        printf("\n1 - unit-тесты, 2 - калькулятор, 0 - выход\n");
+        mode = ReadInt("> ", 0, 2);
+        if (g_eof || mode == 0) {
+            break;
+        }
+        if (mode == 1) {
+            RunAllTests(pIMath, pIMathDP);
+            result = g_failed == 0 ? 0 : -1;
+        }
+        else {
+            Calculator(pIBus);
+        }
+    }
 
 Release:
 
