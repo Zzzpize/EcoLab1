@@ -19,6 +19,7 @@
 
 #include <stdio.h>
 #include <math.h>
+#include <time.h>
 
 /* Eco OS */
 #include "IEcoSystem1.h"
@@ -606,6 +607,81 @@ static void TestNonlinear(IEcoAdvancedMath* rk4, IEcoAdvancedMath* dp) {
     Check("Дорман-Принс, RelTol 1e-8: совпадение с эталоном до 1e-6", errDp < 1e-6);
 }
 
+#define BENCH_REPEATS 2000
+
+static int16_t ECOCALLMETHOD Pendulum(voidptr_t ctx, double_t t, const double_t* y, double_t* dydt, uint32_t n) {
+    dydt[0] = y[1];
+    dydt[1] = -sin(y[0]);
+    return 0;
+}
+
+static double_t MeasureSolve(IEcoAdvancedMath* m, EcoOdeFunc f, double_t t1, const double_t* y0, const EcoOdeOptions* opt, EcoOdeStats* st) {
+    clock_t start = 0;
+    uint32_t i = 0;
+
+    start = clock();
+    for (i = 0; i < BENCH_REPEATS; i++) {
+        m->pVTbl->Solve(m, f, 0, 2, 0.0, t1, y0, opt, BUF_POINTS, g_t, g_y, st);
+    }
+    return (double_t)(clock() - start) / CLOCKS_PER_SEC * 1e6 / BENCH_REPEATS;
+}
+
+static double_t EndError(const EcoOdeStats* st, const double_t* ref) {
+    double_t* y = g_y + 2 * (st->Points - 1);
+    double_t e1 = fabs(y[0] - ref[0]);
+    double_t e2 = fabs(y[1] - ref[1]);
+
+    return e1 > e2 ? e1 : e2;
+}
+
+static int BenchTask(IEcoAdvancedMath* rk4, IEcoAdvancedMath* dp, const char* task, EcoOdeFunc f, double_t t1, const double_t* y0, const double_t* ref, double_t tol) {
+    EcoOdeOptions opt;
+    EcoOdeStats stRk;
+    EcoOdeStats stDp;
+    double_t timeRk = 0;
+    double_t timeDp = 0;
+
+    opt.Step = 0;
+    opt.RelTol = tol;
+    opt.AbsTol = tol * 1e-3;
+    opt.MaxSteps = 0;
+    timeRk = MeasureSolve(rk4, f, t1, y0, 0, &stRk);
+    printf("  %12s %14s %8u %10u %10.2f %12.4f %12.3e\n", task, "RK4", (unsigned)stRk.Steps, (unsigned)stRk.Evaluations, timeRk, timeRk / stRk.Evaluations, EndError(&stRk, ref));
+    timeDp = MeasureSolve(dp, f, t1, y0, &opt, &stDp);
+    printf("  %12s %14s %8u %10u %10.2f %12.4f %12.3e\n", "", "Dormand-Prince", (unsigned)stDp.Steps, (unsigned)stDp.Evaluations, timeDp, timeDp / stDp.Evaluations, EndError(&stDp, ref));
+    printf("  %12s вызовов меньше в %.2f раза, время RK4 / время DP = %.2f\n", "", (double_t)stRk.Evaluations / stDp.Evaluations, timeRk / timeDp);
+    return stRk.Points > 1 && stDp.Points > 1 && stDp.Evaluations < stRk.Evaluations && timeRk > 0 && timeDp > 0;
+}
+
+static void TestPerformance(IEcoAdvancedMath* rk4, IEcoAdvancedMath* dp) {
+    double_t y0[2];
+    double_t ref[2];
+    int ok = 1;
+
+    printf("\n16. Производительность: среднее время одного решения по %d запускам\n", BENCH_REPEATS);
+    printf("  %12s %14s %8s %10s %10s %12s %12s\n", "task", "method", "steps", "f calls", "time, us", "us per call", "|err|");
+
+    y0[0] = 1.0;
+    y0[1] = 0.0;
+    ref[0] = cos(10.0);
+    ref[1] = -sin(10.0);
+    ok = BenchTask(rk4, dp, "oscillator", Oscillator, 10.0, y0, ref, 1e-9) && ok;
+
+    y0[0] = 2.0;
+    y0[1] = 0.0;
+    ref[0] = 2.008149762174939;
+    ref[1] = -0.042508875273136;
+    ok = BenchTask(rk4, dp, "van der pol", VanDerPol, 20.0, y0, ref, 1e-7) && ok;
+
+    y0[0] = 1.0;
+    y0[1] = 0.0;
+    ref[0] = -0.998949814623841;
+    ref[1] = -0.042033377534252;
+    ok = BenchTask(rk4, dp, "pendulum", Pendulum, 10.0, y0, ref, 1e-9) && ok;
+
+    Check("замеры выполнены, Дорман-Принс везде делает меньше вызовов правой части", ok);
+}
+
 /*
  *
  * <summary>
@@ -702,6 +778,7 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
     TestDpErrors(pIMathDP);
     TestCompare(pIMath, pIMathDP);
     TestNonlinear(pIMath, pIMathDP);
+    TestPerformance(pIMath, pIMathDP);
     printf("\nИтого: пройдено %d, провалено %d\n", g_passed, g_failed);
     result = g_failed == 0 ? 0 : -1;
 
