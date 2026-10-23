@@ -22,6 +22,9 @@
 #include "IEcoInterfaceBus1.h"
 #include "IEcoInterfaceBus1MemExt.h"
 #include "CEcoLab1.h"
+#include "IdEcoCalculatorB.h"
+#include "IdEcoCalculatorD.h"
+#include "IdEcoCalculatorE.h"
 /*
  *
  * <summary>
@@ -36,26 +39,10 @@
 static int16_t ECOCALLMETHOD CEcoLab1_847FF6CC_QueryInterface(/* in */ IEcoAdvancedMathPtr_t me, /* in */ const UGUID* riid, /* out */ void** ppv) {
     CEcoLab1_847FF6CC* pCMe = (CEcoLab1_847FF6CC*)me;
 
-    /* Pointer Validation */
     if (me == 0 || ppv == 0) {
         return ERR_ECO_POINTER;
     }
-
-    /* Validate and retrieve requested interface */
-    if ( IsEqualUGUID(riid, &IID_IEcoAdvancedMath) ) {
-        *ppv = &pCMe->m_pVTblIEcoAdvancedMath;
-        pCMe->m_pVTblIEcoAdvancedMath->AddRef((IEcoAdvancedMath*)pCMe);
-    }
-	
-    else if ( IsEqualUGUID(riid, &IID_IEcoUnknown) ) {
-        *ppv = &pCMe->m_pVTblIEcoAdvancedMath;
-        pCMe->m_pVTblIEcoAdvancedMath->AddRef((IEcoAdvancedMath*)pCMe);
-    }
-    else {
-        *ppv = 0;
-        return ERR_ECO_NOINTERFACE;
-    }
-    return ERR_ECO_SUCCESS;
+    return pCMe->m_pIUnkOuter->pVTbl->QueryInterface(pCMe->m_pIUnkOuter, riid, ppv);
 }
 
 /*
@@ -72,12 +59,10 @@ static int16_t ECOCALLMETHOD CEcoLab1_847FF6CC_QueryInterface(/* in */ IEcoAdvan
 static uint32_t ECOCALLMETHOD CEcoLab1_847FF6CC_AddRef(/* in */ IEcoAdvancedMathPtr_t me) {
     CEcoLab1_847FF6CC* pCMe = (CEcoLab1_847FF6CC*)me;
 
-    /* Pointer Validation */
     if (me == 0 ) {
-        return -1; /* ERR_ECO_POINTER */
+        return -1;
     }
-
-    return ++pCMe->m_cRef;
+    return pCMe->m_pIUnkOuter->pVTbl->AddRef(pCMe->m_pIUnkOuter);
 }
 
 /*
@@ -94,17 +79,106 @@ static uint32_t ECOCALLMETHOD CEcoLab1_847FF6CC_AddRef(/* in */ IEcoAdvancedMath
 static uint32_t ECOCALLMETHOD CEcoLab1_847FF6CC_Release(/* in */ IEcoAdvancedMathPtr_t me) {
     CEcoLab1_847FF6CC* pCMe = (CEcoLab1_847FF6CC*)me;
 
-    /* Pointer Validation */
     if (me == 0 ) {
-        return -1; /* ERR_ECO_POINTER */
+        return -1;
     }
+    return pCMe->m_pIUnkOuter->pVTbl->Release(pCMe->m_pIUnkOuter);
+}
 
-    /* Decrementing the component's reference count */
+static int16_t ECOCALLMETHOD CEcoLab1_847FF6CC_IY_QueryInterface(/* in */ IEcoCalculatorYPtr_t me, /* in */ const UGUID* riid, /* out */ voidptr_t* ppv) {
+    CEcoLab1_847FF6CC* pCMe = (CEcoLab1_847FF6CC*)((char_t*)me - sizeof(voidptr_t));
+
+    if (me == 0 || ppv == 0) {
+        return ERR_ECO_POINTER;
+    }
+    return pCMe->m_pIUnkOuter->pVTbl->QueryInterface(pCMe->m_pIUnkOuter, riid, ppv);
+}
+
+static uint32_t ECOCALLMETHOD CEcoLab1_847FF6CC_IY_AddRef(/* in */ IEcoCalculatorYPtr_t me) {
+    CEcoLab1_847FF6CC* pCMe = (CEcoLab1_847FF6CC*)((char_t*)me - sizeof(voidptr_t));
+
+    if (me == 0 ) {
+        return -1;
+    }
+    return pCMe->m_pIUnkOuter->pVTbl->AddRef(pCMe->m_pIUnkOuter);
+}
+
+static uint32_t ECOCALLMETHOD CEcoLab1_847FF6CC_IY_Release(/* in */ IEcoCalculatorYPtr_t me) {
+    CEcoLab1_847FF6CC* pCMe = (CEcoLab1_847FF6CC*)((char_t*)me - sizeof(voidptr_t));
+
+    if (me == 0 ) {
+        return -1;
+    }
+    return pCMe->m_pIUnkOuter->pVTbl->Release(pCMe->m_pIUnkOuter);
+}
+
+static int32_t ECOCALLMETHOD CEcoLab1_847FF6CC_IY_Multiplication(/* in */ IEcoCalculatorYPtr_t me, /* in */ int16_t a, /* in */ int16_t b) {
+    CEcoLab1_847FF6CC* pCMe = (CEcoLab1_847FF6CC*)((char_t*)me - sizeof(voidptr_t));
+
+    if (me == 0 || pCMe->m_pIY == 0) {
+        return -1;
+    }
+    return pCMe->m_pIY->pVTbl->Multiplication(pCMe->m_pIY, a, b);
+}
+
+static int16_t ECOCALLMETHOD CEcoLab1_847FF6CC_IY_Division(/* in */ IEcoCalculatorYPtr_t me, /* in */ int16_t a, /* in */ int16_t b) {
+    CEcoLab1_847FF6CC* pCMe = (CEcoLab1_847FF6CC*)((char_t*)me - sizeof(voidptr_t));
+
+    if (me == 0 || pCMe->m_pIY == 0) {
+        return -1;
+    }
+    if (b == 0) {
+        return 0;
+    }
+    return pCMe->m_pIY->pVTbl->Division(pCMe->m_pIY, a, b);
+}
+
+static int16_t ECOCALLMETHOD CEcoLab1_847FF6CC_NondelegatingQueryInterface(/* in */ IEcoUnknownPtr_t me, /* in */ const UGUID* riid, /* out */ voidptr_t* ppv) {
+    CEcoLab1_847FF6CC* pCMe = (CEcoLab1_847FF6CC*)((char_t*)me - 2 * sizeof(voidptr_t));
+
+    if (me == 0 || ppv == 0) {
+        return ERR_ECO_POINTER;
+    }
+    if ( IsEqualUGUID(riid, &IID_IEcoAdvancedMath) ) {
+        *ppv = &pCMe->m_pVTblIEcoAdvancedMath;
+        ((IEcoUnknown*)(*ppv))->pVTbl->AddRef((IEcoUnknown*)(*ppv));
+    }
+    else if ( IsEqualUGUID(riid, &IID_IEcoCalculatorY) && pCMe->m_pIY != 0 ) {
+        *ppv = &pCMe->m_pVTblIY;
+        ((IEcoUnknown*)(*ppv))->pVTbl->AddRef((IEcoUnknown*)(*ppv));
+    }
+    else if ( IsEqualUGUID(riid, &IID_IEcoCalculatorX) && pCMe->m_pInnerUnknown != 0 ) {
+        return pCMe->m_pInnerUnknown->pVTbl->QueryInterface(pCMe->m_pInnerUnknown, riid, ppv);
+    }
+    else if ( IsEqualUGUID(riid, &IID_IEcoUnknown) ) {
+        *ppv = &pCMe->m_pVTblINondelegatingUnk;
+        ++pCMe->m_cRef;
+    }
+    else {
+        *ppv = 0;
+        return ERR_ECO_NOINTERFACE;
+    }
+    return ERR_ECO_SUCCESS;
+}
+
+static uint32_t ECOCALLMETHOD CEcoLab1_847FF6CC_NondelegatingAddRef(/* in */ IEcoUnknownPtr_t me) {
+    CEcoLab1_847FF6CC* pCMe = (CEcoLab1_847FF6CC*)((char_t*)me - 2 * sizeof(voidptr_t));
+
+    if (me == 0 ) {
+        return -1;
+    }
+    return ++pCMe->m_cRef;
+}
+
+static uint32_t ECOCALLMETHOD CEcoLab1_847FF6CC_NondelegatingRelease(/* in */ IEcoUnknownPtr_t me) {
+    CEcoLab1_847FF6CC* pCMe = (CEcoLab1_847FF6CC*)((char_t*)me - 2 * sizeof(voidptr_t));
+
+    if (me == 0 ) {
+        return -1;
+    }
     --pCMe->m_cRef;
-    /* If the count is zero, free the instance data */
     if ( pCMe->m_cRef == 0 ) {
         pCMe->Delete(pCMe);
-		
         return 0;
     }
     return pCMe->m_cRef;
@@ -635,7 +709,18 @@ static int16_t ECOCALLMETHOD initCEcoLab1_847FF6CC(/*in*/ CEcoLab1_847FF6CCPtr_t
         result = ERR_ECO_GET_MEMORY_ALLOCATOR;
     }
 
+    pCMe->m_pInnerUnknown = 0;
+    if (pIBus->pVTbl->QueryComponent(pIBus, &CID_EcoCalculatorB, pCMe->m_pIUnkOuter, &IID_IEcoUnknown, (void**) &pCMe->m_pInnerUnknown) != 0) {
+        pCMe->m_pInnerUnknown = 0;
+    }
 
+    pCMe->m_pIY = 0;
+    if (pIBus->pVTbl->QueryComponent(pIBus, &CID_EcoCalculatorE, 0, &IID_IEcoCalculatorY, (void**) &pCMe->m_pIY) != 0 || pCMe->m_pIY == 0) {
+        pCMe->m_pIY = 0;
+        if (pIBus->pVTbl->QueryComponent(pIBus, &CID_EcoCalculatorD, 0, &IID_IEcoCalculatorY, (void**) &pCMe->m_pIY) != 0) {
+            pCMe->m_pIY = 0;
+        }
+    }
 
     /* Freeing */
     pIBus->pVTbl->Release(pIBus);
@@ -662,7 +747,10 @@ static int16_t ECOCALLMETHOD createCEcoLab1_847FF6CC(/* in */ CEcoLab1_847FF6CCP
         return result; /* ERR_ECO_POINTER */
     }
 
-
+    pCMe->m_pIUnkOuter = (IEcoUnknown*)&pCMe->m_pVTblINondelegatingUnk;
+    if (pIUnkOuter != 0) {
+        pCMe->m_pIUnkOuter = pIUnkOuter;
+    }
 
     return ERR_ECO_SUCCESS;
 }
@@ -684,6 +772,12 @@ static void ECOCALLMETHOD deleteCEcoLab1_847FF6CC(/* in */ CEcoLab1_847FF6CCPtr_
     if (pCMe != 0 ) {
         pIMem = pCMe->m_pIMem;
         /* Freeing */
+        if ( pCMe->m_pIY != 0 ) {
+            pCMe->m_pIY->pVTbl->Release(pCMe->m_pIY);
+        }
+        if ( pCMe->m_pInnerUnknown != 0 ) {
+            pCMe->m_pInnerUnknown->pVTbl->Release(pCMe->m_pInnerUnknown);
+        }
         if ( pCMe->m_pISys != 0 ) {
             pCMe->m_pISys->pVTbl->Release(pCMe->m_pISys);
         }
@@ -705,16 +799,32 @@ IEcoAdvancedMathVTbl g_x4EF92ACD86564B68821E2E480C0651D9VTbl_847FF6CC = {
     CEcoLab1_847FF6CC_Solvel
 };
 
+IEcoCalculatorYVTbl g_xBD6414C29096423EA90C04D77AFD1CADVTbl_847FF6CC = {
+    CEcoLab1_847FF6CC_IY_QueryInterface,
+    CEcoLab1_847FF6CC_IY_AddRef,
+    CEcoLab1_847FF6CC_IY_Release,
+    CEcoLab1_847FF6CC_IY_Multiplication,
+    CEcoLab1_847FF6CC_IY_Division
+};
 
+IEcoUnknownVTbl g_x000000000000000000000000000000AAVTbl_847FF6CC = {
+    CEcoLab1_847FF6CC_NondelegatingQueryInterface,
+    CEcoLab1_847FF6CC_NondelegatingAddRef,
+    CEcoLab1_847FF6CC_NondelegatingRelease
+};
 
 /* Object Instance */
 CEcoLab1_847FF6CC g_xCEcoLab1_847FF6CC = {
     &g_x4EF92ACD86564B68821E2E480C0651D9VTbl_847FF6CC,
-   
+    &g_xBD6414C29096423EA90C04D77AFD1CADVTbl_847FF6CC,
+    &g_x000000000000000000000000000000AAVTbl_847FF6CC,
     initCEcoLab1_847FF6CC,
     createCEcoLab1_847FF6CC,
     deleteCEcoLab1_847FF6CC,
     1, /* m_cRef */
     0, /* m_pIMem */
-    0  /* m_pISys */
+    0, /* m_pISys */
+    0,
+    0,
+    0
 };

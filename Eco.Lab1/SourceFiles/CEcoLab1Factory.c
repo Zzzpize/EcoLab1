@@ -206,7 +206,7 @@ static int16_t ECOCALLMETHOD CEcoLab1_847FF6CCFactory_Alloc(/* in */ struct IEco
     result = pCObj->Init(pCObj, pISystem);
 
     /* Getting a pointer to the interface */
-    pIUnk = (IEcoUnknown*)pCObj;
+    pIUnk = (IEcoUnknown*)&pCObj->m_pVTblINondelegatingUnk;
     result = pIUnk->pVTbl->QueryInterface(pIUnk, riid, ppv);
 
     /* Decrementing the reference requested by the Component Factory */

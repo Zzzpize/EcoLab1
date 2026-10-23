@@ -28,6 +28,10 @@
 #include "IdEcoFileSystemManagement1.h"
 #include "IdEcoLab1.h"
 #include "IdEcoLab1DP.h"
+#include "IdEcoCalculatorA.h"
+#include "IdEcoCalculatorB.h"
+#include "IdEcoCalculatorD.h"
+#include "IdEcoCalculatorE.h"
 
 #define BUF_POINTS 1001
 
@@ -849,7 +853,163 @@ static void Calculator(IEcoInterfaceBus1* pIBus) {
     }
 }
 
-static void RunAllTests(IEcoAdvancedMath* pIMath, IEcoAdvancedMath* pIMathDP) {
+static void TestCalculatorThroughLab1(IEcoAdvancedMath* pIEcoLab1) {
+    IEcoCalculatorX* pIX = 0;
+    IEcoCalculatorY* pIY = 0;
+    int16_t r1 = 0;
+    int16_t r2 = 0;
+    int32_t c = 0;
+
+    printf("\n17. Калькулятор через Eco.Lab1: X агрегирован из B, Y включен из E\n");
+    r1 = pIEcoLab1->pVTbl->QueryInterface(pIEcoLab1, &IID_IEcoCalculatorX, (void**) &pIX);
+    r2 = pIEcoLab1->pVTbl->QueryInterface(pIEcoLab1, &IID_IEcoCalculatorY, (void**) &pIY);
+    Check("QueryInterface(IID_IEcoCalculatorX) и (IID_IEcoCalculatorY) у Eco.Lab1", r1 == 0 && pIX != 0 && r2 == 0 && pIY != 0);
+    if (pIX == 0 || pIY == 0) {
+        return;
+    }
+    c = pIX->pVTbl->Addition(pIX, 3, 5);
+    printf("  Addition(3, 5) = %d\n", (int)c);
+    printf("  Subtraction(3, 5) = %d\n", (int)pIX->pVTbl->Subtraction(pIX, 3, 5));
+    printf("  Multiplication(6, 7) = %d\n", (int)pIY->pVTbl->Multiplication(pIY, 6, 7));
+    printf("  Division(20, 3) = %d\n", (int)pIY->pVTbl->Division(pIY, 20, 3));
+    printf("  Division(5, 0) = %d\n", (int)pIY->pVTbl->Division(pIY, 5, 0));
+    Check("сложение и вычитание", c == 8 && pIX->pVTbl->Subtraction(pIX, 3, 5) == -2 && pIX->pVTbl->Addition(pIX, -100, 30) == -70);
+    Check("умножение и деление", pIY->pVTbl->Multiplication(pIY, 6, 7) == 42 && pIY->pVTbl->Division(pIY, 20, 3) == 6 && pIY->pVTbl->Division(pIY, -9, 3) == -3);
+    Check("деление на ноль перехвачено во внешнем компоненте", pIY->pVTbl->Division(pIY, 5, 0) == 0);
+    pIY->pVTbl->Release(pIY);
+    pIX->pVTbl->Release(pIX);
+}
+
+static void TestQueryInterfaceRules(IEcoAdvancedMath* pIEcoLab1) {
+    IEcoCalculatorX* pIX = 0;
+    IEcoCalculatorX* pIX2 = 0;
+    IEcoCalculatorY* pIY = 0;
+    IEcoCalculatorY* pIY2 = 0;
+    IEcoAdvancedMath* pIM = 0;
+    IEcoUnknown* pU1 = 0;
+    IEcoUnknown* pU2 = 0;
+    IEcoUnknown* pU3 = 0;
+    void* pBad = 0;
+    int16_t r = 0;
+
+    printf("\n18. Правила QueryInterface\n");
+    pIEcoLab1->pVTbl->QueryInterface(pIEcoLab1, &IID_IEcoCalculatorX, (void**) &pIX);
+    pIX->pVTbl->QueryInterface(pIX, &IID_IEcoCalculatorY, (void**) &pIY);
+
+    pIEcoLab1->pVTbl->QueryInterface(pIEcoLab1, &IID_IEcoUnknown, (void**) &pU1);
+    pIX->pVTbl->QueryInterface(pIX, &IID_IEcoUnknown, (void**) &pU2);
+    pIY->pVTbl->QueryInterface(pIY, &IID_IEcoUnknown, (void**) &pU3);
+    printf("  IEcoUnknown через IEcoAdvancedMath %p, через X %p, через Y %p\n", (void*)pU1, (void*)pU2, (void*)pU3);
+    Check("1. всегда один и тот же IEcoUnknown", pU1 != 0 && pU1 == pU2 && pU2 == pU3);
+
+    r = pIX->pVTbl->QueryInterface(pIX, &IID_IEcoCalculatorY, (void**) &pIY2);
+    Check("2. интерфейс можно получить снова", r == 0 && pIY2 == pIY);
+    pIY2->pVTbl->Release(pIY2);
+
+    r = pIX->pVTbl->QueryInterface(pIX, &IID_IEcoCalculatorX, (void**) &pIX2);
+    Check("3. можно получить интерфейс, который уже есть (X из X)", r == 0 && pIX2 == pIX);
+    pIX2->pVTbl->Release(pIX2);
+
+    r = pIY->pVTbl->QueryInterface(pIY, &IID_IEcoCalculatorX, (void**) &pIX2);
+    Check("4. можно вернуться туда, откуда начали (X -> Y -> X)", r == 0 && pIX2 == pIX);
+    pIX2->pVTbl->Release(pIX2);
+
+    r = pIY->pVTbl->QueryInterface(pIY, &IID_IEcoAdvancedMath, (void**) &pIM);
+    Check("5. из любого интерфейса получается любой (Math -> X -> Y -> Math)", r == 0 && pIM == pIEcoLab1);
+    pIM->pVTbl->Release(pIM);
+
+    pBad = (void*)pIEcoLab1;
+    r = pIX->pVTbl->QueryInterface(pIX, &IID_IEcoInterfaceBus1, &pBad);
+    Check("неподдерживаемый интерфейс: ERR_ECO_NOINTERFACE и нулевой указатель", r == ERR_ECO_NOINTERFACE && pBad == 0);
+
+    pU3->pVTbl->Release(pU3);
+    pU2->pVTbl->Release(pU2);
+    pU1->pVTbl->Release(pU1);
+    pIY->pVTbl->Release(pIY);
+    pIX->pVTbl->Release(pIX);
+}
+
+static void TestReferenceCounting(IEcoAdvancedMath* pIEcoLab1) {
+    IEcoCalculatorX* pIX = 0;
+    IEcoCalculatorY* pIY = 0;
+    uint32_t base = 0;
+    uint32_t cx = 0;
+    uint32_t cy = 0;
+    uint32_t back = 0;
+
+    printf("\n19. Подсчет ссылок: все интерфейсы Eco.Lab1 работают с одним счетчиком\n");
+    base = pIEcoLab1->pVTbl->AddRef(pIEcoLab1);
+    pIEcoLab1->pVTbl->Release(pIEcoLab1);
+    pIEcoLab1->pVTbl->QueryInterface(pIEcoLab1, &IID_IEcoCalculatorX, (void**) &pIX);
+    cx = pIX->pVTbl->AddRef(pIX);
+    pIX->pVTbl->QueryInterface(pIX, &IID_IEcoCalculatorY, (void**) &pIY);
+    cy = pIY->pVTbl->AddRef(pIY);
+    printf("  AddRef: IEcoAdvancedMath %u, X (интерфейс компонента B) %u, Y %u\n", (unsigned)base, (unsigned)cx, (unsigned)cy);
+    Check("AddRef у агрегированного X увеличивает счетчик Eco.Lab1", cx == base + 1 && cy == cx + 2);
+    pIY->pVTbl->Release(pIY);
+    pIY->pVTbl->Release(pIY);
+    pIX->pVTbl->Release(pIX);
+    back = pIX->pVTbl->Release(pIX);
+    printf("  после Release всех полученных указателей: %u\n", (unsigned)back);
+    Check("после Release счетчик вернулся к исходному", back == base - 1);
+}
+
+static void TestInnerComponents(IEcoInterfaceBus1* pIBus) {
+    IEcoCalculatorX* pIX = 0;
+    IEcoCalculatorY* pIY = 0;
+    IEcoCalculatorX* pIXi = 0;
+    int ok = 1;
+
+    printf("\n20. Внутренние компоненты напрямую через интерфейсную шину\n");
+    if (pIBus->pVTbl->QueryComponent(pIBus, &CID_EcoCalculatorA, 0, &IID_IEcoCalculatorX, (void**) &pIX) == 0 && pIX != 0) {
+        printf("  A: 3 + 5 = %d\n", (int)pIX->pVTbl->Addition(pIX, 3, 5));
+        ok = ok && pIX->pVTbl->Addition(pIX, 3, 5) == 8;
+        ok = ok && pIX->pVTbl->Release(pIX) == 0;
+    }
+    else {
+        ok = 0;
+    }
+    pIX = 0;
+    if (pIBus->pVTbl->QueryComponent(pIBus, &CID_EcoCalculatorB, 0, &IID_IEcoCalculatorX, (void**) &pIX) == 0 && pIX != 0) {
+        printf("  B: 3 - 5 = %d\n", (int)pIX->pVTbl->Subtraction(pIX, 3, 5));
+        ok = ok && pIX->pVTbl->Subtraction(pIX, 3, 5) == -2;
+        ok = ok && pIX->pVTbl->Release(pIX) == 0;
+    }
+    else {
+        ok = 0;
+    }
+    if (pIBus->pVTbl->QueryComponent(pIBus, &CID_EcoCalculatorD, 0, &IID_IEcoCalculatorY, (void**) &pIY) == 0 && pIY != 0) {
+        printf("  D: 6 * 7 = %d, через включенный B: 3 + 5 = ", (int)pIY->pVTbl->Multiplication(pIY, 6, 7));
+        ok = ok && pIY->pVTbl->QueryInterface(pIY, &IID_IEcoCalculatorX, (void**) &pIXi) == 0;
+        printf("%d\n", pIXi ? (int)pIXi->pVTbl->Addition(pIXi, 3, 5) : -1);
+        ok = ok && pIXi != 0 && pIXi->pVTbl->Addition(pIXi, 3, 5) == 8;
+        if (pIXi != 0) {
+            pIXi->pVTbl->Release(pIXi);
+        }
+        ok = ok && pIY->pVTbl->Release(pIY) == 0;
+    }
+    else {
+        ok = 0;
+    }
+    pIY = 0;
+    pIXi = 0;
+    if (pIBus->pVTbl->QueryComponent(pIBus, &CID_EcoCalculatorE, 0, &IID_IEcoCalculatorY, (void**) &pIY) == 0 && pIY != 0) {
+        printf("  E: 20 / 3 = %d, через агрегированный B: 3 + 5 = ", (int)pIY->pVTbl->Division(pIY, 20, 3));
+        ok = ok && pIY->pVTbl->QueryInterface(pIY, &IID_IEcoCalculatorX, (void**) &pIXi) == 0;
+        printf("%d\n", pIXi ? (int)pIXi->pVTbl->Addition(pIXi, 3, 5) : -1);
+        ok = ok && pIXi != 0 && pIXi->pVTbl->Addition(pIXi, 3, 5) == 8;
+        if (pIXi != 0) {
+            pIXi->pVTbl->Release(pIXi);
+        }
+        ok = ok && pIY->pVTbl->Release(pIY) == 0;
+    }
+    else {
+        ok = 0;
+    }
+    Check("A, B, D, E работают и освобождаются (счетчик 0 после Release)", ok);
+}
+
+static void RunAllTests(IEcoInterfaceBus1* pIBus, IEcoAdvancedMath* pIMath, IEcoAdvancedMath* pIMathDP) {
     g_passed = 0;
     g_failed = 0;
     printf("Unit-тест компонентов EcoLab1 (Рунге-Кутта 4) и EcoLab1DP (Дорман-Принс)\n");
@@ -868,6 +1028,10 @@ static void RunAllTests(IEcoAdvancedMath* pIMath, IEcoAdvancedMath* pIMathDP) {
     TestCompare(pIMath, pIMathDP);
     TestNonlinear(pIMath, pIMathDP);
     TestPerformance(pIMath, pIMathDP);
+    TestCalculatorThroughLab1(pIMath);
+    TestQueryInterfaceRules(pIMath);
+    TestReferenceCounting(pIMath);
+    TestInnerComponents(pIBus);
     printf("\nИтого: пройдено %d, провалено %d\n", g_passed, g_failed);
 }
 
@@ -921,6 +1085,22 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
     if (result != 0 ) {
         goto Release;
     }
+    result = pIBus->pVTbl->RegisterComponent(pIBus, &CID_EcoCalculatorA, (IEcoUnknown*)GetIEcoComponentFactoryPtr_4828F6552E4540E78121EBD220DC360E);
+    if (result != 0 ) {
+        goto Release;
+    }
+    result = pIBus->pVTbl->RegisterComponent(pIBus, &CID_EcoCalculatorB, (IEcoUnknown*)GetIEcoComponentFactoryPtr_AE202E543CE54550899603BD70C62565);
+    if (result != 0 ) {
+        goto Release;
+    }
+    result = pIBus->pVTbl->RegisterComponent(pIBus, &CID_EcoCalculatorD, (IEcoUnknown*)GetIEcoComponentFactoryPtr_3A8E44677E82475CB4A3719ED8397E61);
+    if (result != 0 ) {
+        goto Release;
+    }
+    result = pIBus->pVTbl->RegisterComponent(pIBus, &CID_EcoCalculatorE, (IEcoUnknown*)GetIEcoComponentFactoryPtr_872FEF1DE3314B87AD44D1E7C232C2F0);
+    if (result != 0 ) {
+        goto Release;
+    }
 #endif
     /* Getting the memory management interface */
     result = pIBus->pVTbl->QueryComponent(pIBus, &CID_EcoMemoryManager1, 0, &IID_IEcoMemoryAllocator1, (void**) &pIMem);
@@ -961,7 +1141,7 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
             break;
         }
         if (mode == 1) {
-            RunAllTests(pIMath, pIMathDP);
+            RunAllTests(pIBus, pIMath, pIMathDP);
             result = g_failed == 0 ? 0 : -1;
         }
         else {

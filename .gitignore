@@ -6,6 +6,8 @@ Eco.Lab1/BuildFiles/**
 !Eco.Lab1/BuildFiles/.gitkeep
 Eco.Lab1DP/BuildFiles/**
 !Eco.Lab1DP/BuildFiles/.gitkeep
+Eco.Calculator*/BuildFiles/**
+!Eco.Calculator*/BuildFiles/.gitkeep
 
 .vscode/
 .idea/

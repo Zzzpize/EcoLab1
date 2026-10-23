@@ -101,7 +101,10 @@ INC = -I "$(ECO_FRAMEWORK)$(SLASH)Eco.Core1$(SLASH)SharedFiles" \
 -I "$(ECO_FRAMEWORK)$(SLASH)Eco.FileSystemManagement1$(SLASH)SharedFiles" \
 -I "$(ECO_FRAMEWORK)$(SLASH)Eco.System1$(SLASH)SharedFiles" \
 -I ..$(SLASH)..$(SLASH)..$(SLASH)HeaderFiles \
--I ..$(SLASH)..$(SLASH)..$(SLASH)SharedFiles
+-I ..$(SLASH)..$(SLASH)..$(SLASH)SharedFiles \
+-I ..$(SLASH)..$(SLASH)..$(SLASH)..$(SLASH)Eco.CalculatorB$(SLASH)SharedFiles \
+-I ..$(SLASH)..$(SLASH)..$(SLASH)..$(SLASH)Eco.CalculatorD$(SLASH)SharedFiles \
+-I ..$(SLASH)..$(SLASH)..$(SLASH)..$(SLASH)Eco.CalculatorE$(SLASH)SharedFiles
 
 # Global Compiler Flags (-DECO_LINUX )
 CCFLAGS = $(SYSROOT) -Wall $(CCFLAGS_BASE) $(CCFLAGS_ARCH) -DUGUID_UTILITY -DECO_LINUX $(LANG_STD_FLAGS) $(INC)
