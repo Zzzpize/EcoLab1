@@ -271,6 +271,9 @@
 				HEADER_SEARCH_PATHS = (
 					../../../HeaderFiles,
 					../../../SharedFiles,
+					../../../../Eco.CalculatorB/SharedFiles,
+					../../../../Eco.CalculatorD/SharedFiles,
+					../../../../Eco.CalculatorE/SharedFiles,
 					"$(ECO_FRAMEWORK)/Eco.FileSystemManagement1/SharedFiles",
 					"$(ECO_FRAMEWORK)/Eco.MemoryManager1/SharedFiles",
 					"$(ECO_FRAMEWORK)/Eco.Core1/SharedFiles",
@@ -340,6 +343,9 @@
 				HEADER_SEARCH_PATHS = (
 					../../../HeaderFiles,
 					../../../SharedFiles,
+					../../../../Eco.CalculatorB/SharedFiles,
+					../../../../Eco.CalculatorD/SharedFiles,
+					../../../../Eco.CalculatorE/SharedFiles,
 					"$(ECO_FRAMEWORK)/Eco.FileSystemManagement1/SharedFiles",
 					"$(ECO_FRAMEWORK)/Eco.MemoryManager1/SharedFiles",
 					"$(ECO_FRAMEWORK)/Eco.Core1/SharedFiles",

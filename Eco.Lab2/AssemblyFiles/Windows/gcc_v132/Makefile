@@ -85,7 +85,10 @@ INC = -I "$(ECO_FRAMEWORK)$(SLASH)Eco.Core1$(SLASH)SharedFiles" \
 -I "$(ECO_FRAMEWORK)$(SLASH)Eco.FileSystemManagement1$(SLASH)SharedFiles" \
 -I "$(ECO_FRAMEWORK)$(SLASH)Eco.System1$(SLASH)SharedFiles"\
 -I ..$(SLASH)..$(SLASH)..$(SLASH)HeaderFiles \
--I ..$(SLASH)..$(SLASH)..$(SLASH)SharedFiles
+-I ..$(SLASH)..$(SLASH)..$(SLASH)SharedFiles \
+-I ..$(SLASH)..$(SLASH)..$(SLASH)..$(SLASH)Eco.Lab1$(SLASH)SharedFiles \
+-I ..$(SLASH)..$(SLASH)..$(SLASH)..$(SLASH)Eco.CalculatorA$(SLASH)SharedFiles \
+-I ..$(SLASH)..$(SLASH)..$(SLASH)..$(SLASH)Eco.CalculatorD$(SLASH)SharedFiles
 
 
 # Source files.
