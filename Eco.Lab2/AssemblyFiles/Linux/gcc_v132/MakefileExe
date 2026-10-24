@@ -95,7 +95,8 @@ endif
 # --- Output Directory Mapping ---
 CONFIG_DIR = $(if $(filter 1,$(DEBUG)),Debug,Release)
 OUT_DIR = ..$(SLASH)..$(SLASH)..$(SLASH)BuildFiles$(SLASH)$(PLATFORM)$(SLASH)$(ARCH_TARGET)$(SLASH)$(BASE_TARGET)$(CONFIG_DIR)
-OUT_NAME = EcoLab2
+OUT_NAME ?= EcoLab2
+CALC_A ?= Eco.CalculatorA
 
 # --- Compilation Flags ---
 # Includes
@@ -121,7 +122,7 @@ LIB_DIR = -L "$(ECO_FRAMEWORK)$(SLASH)Eco.Core1$(SLASH)BuildFiles$(SLASH)$(PLATF
 -L "$(ECO_FRAMEWORK)$(SLASH)Eco.System1$(SLASH)BuildFiles$(SLASH)$(PLATFORM)$(SLASH)$(ARCH_TARGET)$(SLASH)StaticRelease"\
 -L "..$(SLASH)..$(SLASH)..$(SLASH)BuildFiles$(SLASH)$(PLATFORM)$(SLASH)$(ARCH_TARGET)$(SLASH)$(BASE_TARGET)$(CONFIG_DIR)" \
 -L "..$(SLASH)..$(SLASH)..$(SLASH)..$(SLASH)Eco.Lab1$(SLASH)BuildFiles$(SLASH)$(PLATFORM)$(SLASH)$(ARCH_TARGET)$(SLASH)$(BASE_TARGET)$(CONFIG_DIR)" \
--L "..$(SLASH)..$(SLASH)..$(SLASH)..$(SLASH)Eco.CalculatorA$(SLASH)BuildFiles$(SLASH)$(PLATFORM)$(SLASH)$(ARCH_TARGET)$(SLASH)$(BASE_TARGET)$(CONFIG_DIR)" \
+-L "..$(SLASH)..$(SLASH)..$(SLASH)..$(SLASH)$(CALC_A)$(SLASH)BuildFiles$(SLASH)$(PLATFORM)$(SLASH)$(ARCH_TARGET)$(SLASH)$(BASE_TARGET)$(CONFIG_DIR)" \
 -L "..$(SLASH)..$(SLASH)..$(SLASH)..$(SLASH)Eco.CalculatorB$(SLASH)BuildFiles$(SLASH)$(PLATFORM)$(SLASH)$(ARCH_TARGET)$(SLASH)$(BASE_TARGET)$(CONFIG_DIR)" \
 -L "..$(SLASH)..$(SLASH)..$(SLASH)..$(SLASH)Eco.CalculatorD$(SLASH)BuildFiles$(SLASH)$(PLATFORM)$(SLASH)$(ARCH_TARGET)$(SLASH)$(BASE_TARGET)$(CONFIG_DIR)" \
 -L "..$(SLASH)..$(SLASH)..$(SLASH)..$(SLASH)Eco.CalculatorE$(SLASH)BuildFiles$(SLASH)$(PLATFORM)$(SLASH)$(ARCH_TARGET)$(SLASH)$(BASE_TARGET)$(CONFIG_DIR)"

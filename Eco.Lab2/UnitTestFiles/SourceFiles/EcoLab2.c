@@ -212,6 +212,39 @@ static void TestReferenceCounting(IEcoLab2* pIEcoLab2) {
     Check("после Release счетчик вернулся к исходному", back == base - 1);
 }
 
+static void TestComponentA(IEcoInterfaceBus1* pIBus, IEcoLab2* pIEcoLab2) {
+    IEcoCalculatorX* pIX = 0;
+    IEcoCalculatorY* pIY = 0;
+    int16_t coeffs[3];
+    int32_t value = 0;
+    int16_t r = 0;
+
+    printf("\n5. Компонент с CID_EcoCalculatorA: A или C\n");
+    r = pIBus->pVTbl->QueryComponent(pIBus, &CID_EcoCalculatorA, 0, &IID_IEcoCalculatorX, (void**) &pIX);
+    Check("по CID_EcoCalculatorA получен IEcoCalculatorX", r == 0 && pIX != 0);
+    if (pIX == 0) {
+        return;
+    }
+    r = pIX->pVTbl->QueryInterface(pIX, &IID_IEcoCalculatorY, (void**) &pIY);
+    if (r == 0 && pIY != 0) {
+        printf("подключен компонент C: есть X и Y, 6 * 7 = %d\n", (int)pIY->pVTbl->Multiplication(pIY, 6, 7));
+        Check("компонент C: интерфейс Y работает", pIY->pVTbl->Multiplication(pIY, 6, 7) == 42 && pIY->pVTbl->Division(pIY, 20, 3) == 6);
+        pIY->pVTbl->Release(pIY);
+    }
+    else {
+        printf("подключен компонент A: есть только X\n");
+        Check("компонент A: Y не поддерживается, ERR_ECO_NOINTERFACE", r == ERR_ECO_NOINTERFACE && pIY == 0);
+    }
+    Check("сложение через этот компонент", pIX->pVTbl->Addition(pIX, 3, 5) == 8);
+    pIX->pVTbl->Release(pIX);
+
+    coeffs[0] = 1;
+    coeffs[1] = 2;
+    coeffs[2] = 1;
+    r = pIEcoLab2->pVTbl->Horner(pIEcoLab2, coeffs, 3, 4, &value);
+    Check("Eco.Lab2 работает без изменений: (x + 1)^2 при x = 4 равно 25", r == 0 && value == 25);
+}
+
 /*
  *
  * <summary>
@@ -305,6 +338,7 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
     TestAggregatedLab1(pIEcoLab2);
     TestQueryInterfaceRules(pIEcoLab2);
     TestReferenceCounting(pIEcoLab2);
+    TestComponentA(pIBus, pIEcoLab2);
     printf("\nИтого: пройдено %d, провалено %d\n", g_passed, g_failed);
     result = g_failed == 0 ? 0 : -1;
 
