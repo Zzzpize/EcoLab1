@@ -26,6 +26,7 @@
 #include "IdEcoMemoryManager1.h"
 #include "IdEcoInterfaceBus1.h"
 #include "IdEcoFileSystemManagement1.h"
+#include "IdEcoList1.h"
 #include "IdEcoLab1.h"
 #include "IdEcoLab1DP.h"
 #include "IdEcoCalculatorA.h"
@@ -1076,6 +1077,10 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
     }
 #ifdef ECO_LIB
     /* Registration of a static component for working with the list */
+    result = pIBus->pVTbl->RegisterComponent(pIBus, &CID_EcoList1, (IEcoUnknown*)GetIEcoComponentFactoryPtr_53884AFC93C448ECAA929C8D3A562281);
+    if (result != 0 ) {
+        goto Release;
+    }
     result = pIBus->pVTbl->RegisterComponent(pIBus, &CID_EcoLab1, (IEcoUnknown*)GetIEcoComponentFactoryPtr_039232DCC9354369925013DC847FF6CC);
     if (result != 0 ) {
         /* Free in case of an error */
