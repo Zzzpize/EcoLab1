@@ -39,5 +39,7 @@
  */
 #define ERR_ECOLAB1DP_REQ_COMP_LIST 1001
 
+#define ERR_ECOLAB1DP_STOPPED 1002
+
 
 #endif /* __ERR_ECOLAB1DP_H__ */

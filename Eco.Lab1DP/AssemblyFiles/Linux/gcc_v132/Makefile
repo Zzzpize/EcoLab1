@@ -100,6 +100,7 @@ INC = -I "$(ECO_FRAMEWORK)$(SLASH)Eco.Core1$(SLASH)SharedFiles" \
 -I "$(ECO_FRAMEWORK)$(SLASH)Eco.MemoryManager1$(SLASH)SharedFiles" \
 -I "$(ECO_FRAMEWORK)$(SLASH)Eco.FileSystemManagement1$(SLASH)SharedFiles" \
 -I "$(ECO_FRAMEWORK)$(SLASH)Eco.System1$(SLASH)SharedFiles" \
+-I "$(ECO_FRAMEWORK)$(SLASH)Eco.List1$(SLASH)SharedFiles" \
 -I ..$(SLASH)..$(SLASH)..$(SLASH)HeaderFiles \
 -I ..$(SLASH)..$(SLASH)..$(SLASH)SharedFiles
 
@@ -119,6 +120,9 @@ LIBS = -lgcc
 
 # --- Source and Object Files ---
 SRC = ..$(SLASH)..$(SLASH)..$(SLASH)SourceFiles$(SLASH)CEcoLab1DP.c \
+      ..$(SLASH)..$(SLASH)..$(SLASH)SourceFiles$(SLASH)CEcoLab1DPConnectionPoint.c \
+      ..$(SLASH)..$(SLASH)..$(SLASH)SourceFiles$(SLASH)CEcoLab1DPEnumConnections.c \
+      ..$(SLASH)..$(SLASH)..$(SLASH)SourceFiles$(SLASH)CEcoLab1DPEnumConnectionPoints.c \
       ..$(SLASH)..$(SLASH)..$(SLASH)SourceFiles$(SLASH)CEcoLab1DPFactory.c
 
 OBJ = $(SRC:.c=.o)
