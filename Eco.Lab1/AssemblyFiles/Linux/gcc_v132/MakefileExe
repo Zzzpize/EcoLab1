@@ -111,6 +111,7 @@ INC = -I "$(ECO_FRAMEWORK)$(SLASH)Eco.Core1$(SLASH)SharedFiles" \
 -I ..$(SLASH)..$(SLASH)..$(SLASH)..$(SLASH)Eco.CalculatorB$(SLASH)SharedFiles$(SLASH) \
 -I ..$(SLASH)..$(SLASH)..$(SLASH)..$(SLASH)Eco.CalculatorD$(SLASH)SharedFiles$(SLASH) \
 -I ..$(SLASH)..$(SLASH)..$(SLASH)..$(SLASH)Eco.CalculatorE$(SLASH)SharedFiles$(SLASH) \
+-I ..$(SLASH)..$(SLASH)..$(SLASH)UnitTestFiles$(SLASH)HeaderFiles$(SLASH) \
 -I ..$(SLASH)..$(SLASH)..$(SLASH)HeaderFiles$(SLASH) \
 -I ..$(SLASH)..$(SLASH)..$(SLASH)HeaderFiles$(SLASH)$(ARCH)
 
@@ -149,7 +150,8 @@ LDFLAGS = $(SYSROOT) $(LDFLAGS_ARCH)
 LIBS = $(LIB_DIR) $(LIBS_TARGET)
 
 # --- Source and Object Files ---
-SRC_C = ..$(SLASH)..$(SLASH)..$(SLASH)UnitTestFiles$(SLASH)SourceFiles$(SLASH)EcoLab1.c
+SRC_C = ..$(SLASH)..$(SLASH)..$(SLASH)UnitTestFiles$(SLASH)SourceFiles$(SLASH)EcoLab1.c \
+        ..$(SLASH)..$(SLASH)..$(SLASH)UnitTestFiles$(SLASH)SourceFiles$(SLASH)CEcoLab1Sink.c
 SRC_S = 
 
 OBJ = $(SRC_C:.c=.o)

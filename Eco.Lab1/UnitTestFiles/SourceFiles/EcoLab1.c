@@ -33,6 +33,11 @@
 #include "IdEcoCalculatorB.h"
 #include "IdEcoCalculatorD.h"
 #include "IdEcoCalculatorE.h"
+#include "IEcoConnectionPointContainer.h"
+#include "IEcoEnumConnections.h"
+#include "ErrEcoLab1.h"
+#include "ErrEcoLab1DP.h"
+#include "CEcoLab1Sink.h"
 
 #define BUF_POINTS 1001
 
@@ -1010,7 +1015,333 @@ static void TestInnerComponents(IEcoInterfaceBus1* pIBus) {
     Check("A, B, D, E работают и освобождаются (счетчик 0 после Release)", ok);
 }
 
-static void RunAllTests(IEcoInterfaceBus1* pIBus, IEcoAdvancedMath* pIMath, IEcoAdvancedMath* pIMathDP) {
+static IEcoConnectionPoint* FindEventsPoint(IEcoAdvancedMath* m) {
+    IEcoConnectionPointContainer* pICPC = 0;
+    IEcoConnectionPoint* pICP = 0;
+
+    if (m->pVTbl->QueryInterface(m, &IID_IEcoConnectionPointContainer, (void**) &pICPC) != 0 || pICPC == 0) {
+        return 0;
+    }
+    if (pICPC->pVTbl->FindConnectionPoint(pICPC, &IID_IEcoLab1Events, &pICP) != 0) {
+        pICP = 0;
+    }
+    pICPC->pVTbl->Release(pICPC);
+    return pICP;
+}
+
+static CEcoLab1Sink* CreateSink(IEcoMemoryAllocator1* pIMem, const char_t* name, uint32_t kind, bool_t print) {
+    IEcoLab1Events* pIEvents = 0;
+
+    if (createCEcoLab1Sink(pIMem, name, kind, &pIEvents) != 0 || pIEvents == 0) {
+        return 0;
+    }
+    ((CEcoLab1Sink*)pIEvents)->m_bPrint = print;
+    return (CEcoLab1Sink*)pIEvents;
+}
+
+static uint32_t ReleaseSink(CEcoLab1Sink* pSink) {
+    IEcoLab1Events* pIEvents = (IEcoLab1Events*)pSink;
+
+    if (pSink == 0) {
+        return 0;
+    }
+    return pIEvents->pVTbl->Release(pIEvents);
+}
+
+static uint32_t RefCount(IEcoAdvancedMath* m) {
+    uint32_t c = m->pVTbl->AddRef(m);
+    m->pVTbl->Release(m);
+    return c - 1;
+}
+
+static void TestConnectionPoints(IEcoAdvancedMath* rk4, IEcoAdvancedMath* dp) {
+    IEcoConnectionPointContainer* pICPC = 0;
+    IEcoConnectionPointContainer* pICPC2 = 0;
+    IEcoConnectionPoint* pICP = 0;
+    IEcoConnectionPoint* pIBad = 0;
+    IEcoConnectionPoint* cps[2] = {0, 0};
+    IEcoEnumConnectionPoints* pEnum = 0;
+    UGUID iid;
+    uint32_t fetched = 0;
+    uint32_t base = RefCount(rk4);
+    int ok = 0;
+
+    printf("\n21. Точки подключения: IEcoConnectionPointContainer у Eco.Lab1 и Eco.Lab1DP\n");
+    ok = rk4->pVTbl->QueryInterface(rk4, &IID_IEcoConnectionPointContainer, (void**) &pICPC) == 0 && pICPC != 0;
+    Check("Eco.Lab1 отдает IEcoConnectionPointContainer", ok);
+    if (!ok) {
+        return;
+    }
+    ok = pICPC->pVTbl->FindConnectionPoint(pICPC, &IID_IEcoAdvancedMath, &pIBad) != 0 && pIBad == 0;
+    Check("FindConnectionPoint для IID, у которого нет точки, возвращает ошибку", ok);
+
+    ok = pICPC->pVTbl->FindConnectionPoint(pICPC, &IID_IEcoLab1Events, &pICP) == 0 && pICP != 0;
+    if (ok) {
+        ok = pICP->pVTbl->GetConnectionInterface(pICP, &iid) == 0 && IsEqualUGUID(&iid, &IID_IEcoLab1Events);
+        ok = ok && pICP->pVTbl->GetConnectionPointContainer(pICP, &pICPC2) == 0 && pICPC2 == pICPC;
+        if (pICPC2 != 0) {
+            pICPC2->pVTbl->Release(pICPC2);
+        }
+    }
+    Check("найдена точка IEcoLab1Events, GetConnectionInterface и GetConnectionPointContainer верны", ok);
+
+    ok = pICPC->pVTbl->EnumConnectionPoints(pICPC, &pEnum) == 0 && pEnum != 0;
+    if (ok) {
+        pEnum->pVTbl->Next(pEnum, 2, cps, &fetched);
+        printf("EnumConnectionPoints: точек %u\n", (unsigned)fetched);
+        ok = fetched == 1 && cps[0] == pICP;
+        if (cps[0] != 0) {
+            cps[0]->pVTbl->Release(cps[0]);
+        }
+        pEnum->pVTbl->Release(pEnum);
+    }
+    Check("EnumConnectionPoints перечисляет одну точку", ok);
+
+    if (pICP != 0) {
+        pICP->pVTbl->Release(pICP);
+    }
+    pICPC->pVTbl->Release(pICPC);
+    Check("после Release счетчик ссылок Eco.Lab1 вернулся к исходному", RefCount(rk4) == base);
+
+    pICP = FindEventsPoint(dp);
+    Check("у Eco.Lab1DP тоже есть точка IEcoLab1Events", pICP != 0);
+    if (pICP != 0) {
+        pICP->pVTbl->Release(pICP);
+    }
+}
+
+static void TestOneSink(IEcoMemoryAllocator1* pIMem, IEcoAdvancedMath* rk4) {
+    CEcoLab1Sink* pSink = CreateSink(pIMem, "статистика", ECOLAB1_SINK_STATS, 0);
+    EcoOdeOptions opt = {0};
+    EcoOdeStats st;
+    double_t y0[2] = {1, 0};
+    float_t y0f[2] = {1, 0};
+    ldouble_t y0l[2] = {1, 0};
+    int16_t r = 0;
+
+    printf("\n22. Один приемник и один объект: события Solve, Solvef и Solvel у Eco.Lab1\n");
+    if (pSink == 0) {
+        Check("приемник создан", 0);
+        return;
+    }
+    Check("Advise приемника к Eco.Lab1", pSink->Advise(pSink, (IEcoUnknown*)rk4) == 0 && pSink->m_cCookie[0] != 0);
+
+    opt.Step = 0.1;
+    r = rk4->pVTbl->Solve(rk4, Oscillator, 0, 2, 0, 1, y0, &opt, BUF_POINTS, g_t, g_y, &st);
+    printf("Solve: начал %u, шагов %u, отклонено %u, закончил %u, шаг от %g до %g\n", (unsigned)pSink->m_cStarted, (unsigned)pSink->m_cSteps, (unsigned)pSink->m_cRejected, (unsigned)pSink->m_cFinished, pSink->m_hMin, pSink->m_hMax);
+    Check("на каждый шаг пришло событие OnStep, OnSolveStarted и OnSolveFinished по одному", r == 0 && pSink->m_cStarted == 1 && pSink->m_cSteps == st.Steps && st.Steps == 10 && pSink->m_cFinished == 1 && pSink->m_LastStatus == 0);
+    Check("у RK4 нет отклоненных шагов, шаг постоянный", pSink->m_cRejected == 0 && fabs(pSink->m_hMin - 0.1) < 1e-12 && fabs(pSink->m_hMax - 0.1) < 1e-12);
+
+    r = rk4->pVTbl->Solvef(rk4, OscillatorF, 0, 2, 0, 1, y0f, &opt, BUF_POINTS, g_tf, g_yf, &st);
+    r = r == 0 ? rk4->pVTbl->Solvel(rk4, OscillatorL, 0, 2, 0, 1, y0l, &opt, BUF_POINTS, g_tl, g_yl, &st) : r;
+    Check("Solvef и Solvel тоже рассылают события", r == 0 && pSink->m_cStarted == 3 && pSink->m_cSteps == 30 && pSink->m_cFinished == 3);
+
+    Check("Unadvise", pSink->Unadvise(pSink, (IEcoUnknown*)rk4) == 0 && pSink->m_cRef == 1);
+    ReleaseSink(pSink);
+}
+
+static void TestManyToMany(IEcoMemoryAllocator1* pIMem, IEcoAdvancedMath* rk4, IEcoAdvancedMath* dp) {
+    CEcoLab1Sink* sinks[3];
+    IEcoConnectionPoint* pICP = 0;
+    IEcoEnumConnections* pEnum = 0;
+    EcoConnectionData cd[4];
+    EcoOdeOptions opt = {0};
+    EcoOdeStats stRk;
+    EcoOdeStats stDp;
+    double_t y0[2] = {1, 0};
+    uint32_t fetched = 0;
+    uint32_t i = 0;
+    int ok = 1;
+
+    printf("\n23. Многие ко многим: три приемника подписаны на Eco.Lab1 и Eco.Lab1DP\n");
+    sinks[0] = CreateSink(pIMem, "трасса", ECOLAB1_SINK_TRACE, 0);
+    sinks[1] = CreateSink(pIMem, "статистика", ECOLAB1_SINK_STATS, 0);
+    sinks[2] = CreateSink(pIMem, "детектор", ECOLAB1_SINK_DETECTOR, 0);
+    for (i = 0; i < 3; i++) {
+        ok = ok && sinks[i] != 0;
+    }
+    if (!ok) {
+        Check("приемники созданы", 0);
+        return;
+    }
+    for (i = 0; i < 3; i++) {
+        sinks[i]->m_bStopOnEvent = 0;
+        ok = ok && sinks[i]->Advise(sinks[i], (IEcoUnknown*)rk4) == 0;
+        ok = ok && sinks[i]->Advise(sinks[i], (IEcoUnknown*)dp) == 0;
+        ok = ok && sinks[i]->m_cRef == 3;
+    }
+    Check("каждый приемник подписан на оба объекта, у каждого 2 ссылки от точек подключения", ok);
+
+    pICP = FindEventsPoint(rk4);
+    ok = pICP != 0 && pICP->pVTbl->EnumConnections(pICP, &pEnum) == 0 && pEnum != 0;
+    if (ok) {
+        pEnum->pVTbl->Next(pEnum, 4, cd, &fetched);
+        ok = fetched == 3 && cd[0].cCookie != cd[1].cCookie && cd[1].cCookie != cd[2].cCookie;
+        for (i = 0; i < fetched; i++) {
+            cd[i].pUnk->pVTbl->Release(cd[i].pUnk);
+        }
+        pEnum->pVTbl->Release(pEnum);
+    }
+    if (pICP != 0) {
+        pICP->pVTbl->Release(pICP);
+    }
+    printf("EnumConnections у Eco.Lab1: подключений %u\n", (unsigned)fetched);
+    Check("EnumConnections перечисляет три подключения с разными cookie", ok);
+
+    opt.Step = 0.1;
+    rk4->pVTbl->Solve(rk4, Oscillator, 0, 2, 0, 2, y0, &opt, BUF_POINTS, g_t, g_y, &stRk);
+    opt.Step = 1;
+    opt.RelTol = 1e-9;
+    opt.AbsTol = 1e-12;
+    dp->pVTbl->Solve(dp, Oscillator, 0, 2, 0, 10, y0, &opt, BUF_POINTS, g_t, g_y, &stDp);
+    printf("RK4: шагов %u; Дорман-Принс: шагов %u, отклонено %u\n", (unsigned)stRk.Steps, (unsigned)stDp.Steps, (unsigned)stDp.Rejected);
+    ok = 1;
+    for (i = 0; i < 3; i++) {
+        printf("  [%s] начал %u, шагов %u, отклонено %u, закончил %u\n", sinks[i]->m_Name, (unsigned)sinks[i]->m_cStarted, (unsigned)sinks[i]->m_cSteps, (unsigned)sinks[i]->m_cRejected, (unsigned)sinks[i]->m_cFinished);
+        ok = ok && sinks[i]->m_cStarted == 2 && sinks[i]->m_cFinished == 2;
+        ok = ok && sinks[i]->m_cSteps == stRk.Steps + stDp.Steps && sinks[i]->m_cRejected == stDp.Rejected;
+    }
+    Check("каждый приемник получил все события от обоих объектов", ok && stDp.Rejected > 0);
+
+    printf("\n24. Отписка одного приемника от одного объекта\n");
+    ok = sinks[1]->Unadvise(sinks[1], (IEcoUnknown*)rk4) == 0 && sinks[1]->m_cRef == 2;
+    Check("Unadvise статистики от Eco.Lab1", ok);
+    Check("повторный Unadvise возвращает ошибку", sinks[1]->Unadvise(sinks[1], (IEcoUnknown*)rk4) != 0);
+    opt.Step = 0.1;
+    opt.RelTol = 0;
+    opt.AbsTol = 0;
+    rk4->pVTbl->Solve(rk4, Oscillator, 0, 2, 0, 2, y0, &opt, BUF_POINTS, g_t, g_y, &stRk);
+    printf("после нового Solve у Eco.Lab1: трасса %u шагов, статистика %u шагов\n", (unsigned)sinks[0]->m_cSteps, (unsigned)sinks[1]->m_cSteps);
+    Check("события Eco.Lab1 приходят трассе и детектору, но не статистике", sinks[0]->m_cStarted == 3 && sinks[2]->m_cStarted == 3 && sinks[1]->m_cStarted == 2);
+
+    ok = 1;
+    for (i = 0; i < 3; i++) {
+        if (i != 1) {
+            ok = ok && sinks[i]->Unadvise(sinks[i], (IEcoUnknown*)rk4) == 0;
+        }
+        ok = ok && sinks[i]->Unadvise(sinks[i], (IEcoUnknown*)dp) == 0;
+        ok = ok && sinks[i]->m_cRef == 1;
+        ok = ok && ReleaseSink(sinks[i]) == 0;
+    }
+    Check("после отписки от всех объектов приемники освобождаются (счетчик 0)", ok);
+}
+
+static void TestDetector(IEcoMemoryAllocator1* pIMem, IEcoAdvancedMath* rk4, IEcoAdvancedMath* dp) {
+    CEcoLab1Sink* pSink = CreateSink(pIMem, "детектор", ECOLAB1_SINK_DETECTOR, 0);
+    EcoOdeOptions opt = {0};
+    EcoOdeStats st;
+    double_t y0[2] = {1, 0};
+    double_t halfPi = 1.57079632679489662;
+    int16_t r = 0;
+
+    printf("\n25. Остановка решения приемником: поиск первого нуля y1 = cos(t), как Events в ode45\n");
+    if (pSink == 0) {
+        Check("приемник создан", 0);
+        return;
+    }
+    pSink->Advise(pSink, (IEcoUnknown*)rk4);
+    pSink->Advise(pSink, (IEcoUnknown*)dp);
+
+    opt.Step = 0.1;
+    r = rk4->pVTbl->Solve(rk4, Oscillator, 0, 2, 0, 10, y0, &opt, BUF_POINTS, g_t, g_y, &st);
+    printf("RK4: код %d, шагов %u, последняя точка t = %g, t* = %.8f, pi/2 = %.8f\n", (int)r, (unsigned)st.Steps, g_t[st.Steps], pSink->m_tEvent, halfPi);
+    Check("RK4 остановлен приемником (ERR_ECOLAB1_STOPPED) сразу после смены знака", r == ERR_ECOLAB1_STOPPED && st.Steps == 16 && pSink->m_bEvent);
+    Check("момент события найден с точностью 1e-3", fabs(pSink->m_tEvent - halfPi) < 1e-3);
+
+    opt.Step = 0;
+    opt.RelTol = 1e-8;
+    opt.AbsTol = 1e-10;
+    r = dp->pVTbl->Solve(dp, Oscillator, 0, 2, 0, 10, y0, &opt, BUF_POINTS, g_t, g_y, &st);
+    printf("Дорман-Принс: код %d, шагов %u, последняя точка t = %g, t* = %.8f\n", (int)r, (unsigned)st.Steps, g_t[st.Steps], pSink->m_tEvent);
+    Check("Дорман-Принс тоже остановлен, решение до t = 10 не досчитано", r == ERR_ECOLAB1DP_STOPPED && g_t[st.Steps] < 2 && pSink->m_LastStatus == ERR_ECOLAB1DP_STOPPED);
+    Check("момент события найден с точностью 1e-3", fabs(pSink->m_tEvent - halfPi) < 1e-3);
+
+    pSink->Unadvise(pSink, (IEcoUnknown*)rk4);
+    pSink->Unadvise(pSink, (IEcoUnknown*)dp);
+    ReleaseSink(pSink);
+}
+
+static void TestSinkLifetime(IEcoInterfaceBus1* pIBus, IEcoMemoryAllocator1* pIMem) {
+    CEcoLab1Sink* pSink = CreateSink(pIMem, "статистика", ECOLAB1_SINK_STATS, 0);
+    IEcoAdvancedMath* pITmp = 0;
+    int ok = 0;
+
+    printf("\n26. Объект освобождает приемники при удалении\n");
+    if (pSink == 0) {
+        Check("приемник создан", 0);
+        return;
+    }
+    ok = pIBus->pVTbl->QueryComponent(pIBus, &CID_EcoLab1DP, 0, &IID_IEcoAdvancedMath, (void**) &pITmp) == 0 && pITmp != 0;
+    ok = ok && pSink->Advise(pSink, (IEcoUnknown*)pITmp) == 0 && pSink->m_cRef == 2;
+    printf("счетчик приемника после Advise: %u\n", ok ? (unsigned)pSink->m_cRef : 0);
+    ok = ok && pITmp->pVTbl->Release(pITmp) == 0;
+    printf("счетчик приемника после Release объекта без Unadvise: %u\n", (unsigned)pSink->m_cRef);
+    Check("при удалении объекта точка подключения отпускает приемник", ok && pSink->m_cRef == 1);
+    ReleaseSink(pSink);
+}
+
+static void EventsDemo(IEcoMemoryAllocator1* pIMem, IEcoAdvancedMath* rk4, IEcoAdvancedMath* dp) {
+    CEcoLab1Sink* pTrace = CreateSink(pIMem, "трасса", ECOLAB1_SINK_TRACE, 1);
+    CEcoLab1Sink* pStats = CreateSink(pIMem, "статистика", ECOLAB1_SINK_STATS, 1);
+    CEcoLab1Sink* pDetector = CreateSink(pIMem, "детектор", ECOLAB1_SINK_DETECTOR, 1);
+    CEcoLab1Sink* all[3];
+    EcoOdeOptions opt = {0};
+    EcoOdeStats st;
+    double_t y0[2] = {1, 0};
+    int16_t r = 0;
+    int i = 0;
+
+    if (pTrace == 0 || pStats == 0 || pDetector == 0) {
+        printf("не удалось создать приемники\n");
+        ReleaseSink(pTrace);
+        ReleaseSink(pStats);
+        ReleaseSink(pDetector);
+        return;
+    }
+    all[0] = pTrace;
+    all[1] = pStats;
+    all[2] = pDetector;
+
+    printf("\nСобытия: два подключаемых объекта и три приемника (многие ко многим)\n");
+    printf("логи -> Eco.Lab1, Eco.Lab1DP; статистика -> Eco.Lab1, Eco.Lab1DP; детектор нуля y1 -> Eco.Lab1DP\n");
+    pTrace->Advise(pTrace, (IEcoUnknown*)rk4);
+    pTrace->Advise(pTrace, (IEcoUnknown*)dp);
+    pStats->Advise(pStats, (IEcoUnknown*)rk4);
+    pStats->Advise(pStats, (IEcoUnknown*)dp);
+    pDetector->Advise(pDetector, (IEcoUnknown*)dp);
+
+    printf("\n1) Eco.Lab1 (Рунге-Кутта 4): осциллятор y1' = y2, y2' = -y1, y(0) = (1, 0), отрезок [0, 1], шаг 0.1\n");
+    opt.Step = 0.1;
+    r = rk4->pVTbl->Solve(rk4, Oscillator, 0, 2, 0, 1, y0, &opt, BUF_POINTS, g_t, g_y, &st);
+    printf("Solve вернул %d\n", (int)r);
+
+    printf("\n2) Eco.Lab1DP (Дорман-Принс): тот же осциллятор на [0, 3], начальный шаг 1, точность 1e-6\n");
+    opt.Step = 1;
+    opt.RelTol = 1e-6;
+    opt.AbsTol = 1e-9;
+    r = dp->pVTbl->Solve(dp, Oscillator, 0, 2, 0, 3, y0, &opt, BUF_POINTS, g_t, g_y, &st);
+    printf("Solve вернул %d (%s), последняя точка t = %g, точное значение pi/2 = 1.570796\n", (int)r, r == ERR_ECOLAB1DP_STOPPED ? "остановлен приемником" : "досчитан", g_t[st.Steps]);
+
+    printf("\n3) детектор отписывается от Eco.Lab1DP, решение повторяется\n");
+    pDetector->Unadvise(pDetector, (IEcoUnknown*)dp);
+    r = dp->pVTbl->Solve(dp, Oscillator, 0, 2, 0, 3, y0, &opt, BUF_POINTS, g_t, g_y, &st);
+    printf("Solve вернул %d, последняя точка t = %g\n", (int)r, g_t[st.Steps]);
+
+    printf("\nИтого по приемникам:\n");
+    for (i = 0; i < 3; i++) {
+        printf("%s: решений %u, шагов %u, отклонено %u\n", all[i]->m_Name, (unsigned)all[i]->m_cStarted, (unsigned)all[i]->m_cSteps, (unsigned)all[i]->m_cRejected);
+    }
+
+    pTrace->Unadvise(pTrace, (IEcoUnknown*)rk4);
+    pTrace->Unadvise(pTrace, (IEcoUnknown*)dp);
+    pStats->Unadvise(pStats, (IEcoUnknown*)rk4);
+    pStats->Unadvise(pStats, (IEcoUnknown*)dp);
+    ReleaseSink(pTrace);
+    ReleaseSink(pStats);
+    ReleaseSink(pDetector);
+}
+
+static void RunAllTests(IEcoInterfaceBus1* pIBus, IEcoMemoryAllocator1* pIMem, IEcoAdvancedMath* pIMath, IEcoAdvancedMath* pIMathDP) {
     g_passed = 0;
     g_failed = 0;
     printf("Unit-тест компонентов EcoLab1 (Рунге-Кутта 4) и EcoLab1DP (Дорман-Принс)\n");
@@ -1033,6 +1364,11 @@ static void RunAllTests(IEcoInterfaceBus1* pIBus, IEcoAdvancedMath* pIMath, IEco
     TestQueryInterfaceRules(pIMath);
     TestReferenceCounting(pIMath);
     TestInnerComponents(pIBus);
+    TestConnectionPoints(pIMath, pIMathDP);
+    TestOneSink(pIMem, pIMath);
+    TestManyToMany(pIMem, pIMath, pIMathDP);
+    TestDetector(pIMem, pIMath, pIMathDP);
+    TestSinkLifetime(pIBus, pIMem);
     printf("\nИтого: пройдено %d, провалено %d\n", g_passed, g_failed);
 }
 
@@ -1140,17 +1476,20 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
 
     result = 0;
     while (!g_eof) {
-        printf("\n1 - unit-тесты, 2 - калькулятор, 0 - выход\n");
-        mode = ReadInt("> ", 0, 2);
+        printf("\n1 - unit-тесты, 2 - калькулятор, 3 - события, 0 - выход\n");
+        mode = ReadInt("> ", 0, 3);
         if (g_eof || mode == 0) {
             break;
         }
         if (mode == 1) {
-            RunAllTests(pIBus, pIMath, pIMathDP);
+            RunAllTests(pIBus, pIMem, pIMath, pIMathDP);
             result = g_failed == 0 ? 0 : -1;
         }
-        else {
+        else if (mode == 2) {
             Calculator(pIBus);
+        }
+        else {
+            EventsDemo(pIMem, pIMath, pIMathDP);
         }
     }
 
